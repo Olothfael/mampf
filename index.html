@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Essensplan für die Woche</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f39c12;
+            --bg: #f1f5f9;
+            --body-bg: linear-gradient(180deg, #eef2ff 0%, #f8fafc 60%);
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --body-bg: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+            --card: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #cbd5e1;
+            --border: #334155;
+            --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--body-bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 30px 16px 40px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 760px;
+            padding: 24px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .app-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+
+        .app-title h1 {
+            margin: 0;
+            font-size: clamp(2rem, 3vw, 2.6rem);
+            line-height: 1.05;
+        }
+
+        .subtitle {
+            margin: 10px 0 0;
+            color: var(--text-muted);
+            max-width: 480px;
+            font-size: 0.98rem;
+            line-height: 1.6;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            width: min(100%, 320px);
+        }
+
+        .status-message {
+            min-height: 24px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .day-card {
+            background: var(--card);
+            border-radius: 28px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .day-label {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .favorite-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--danger);
+        }
+
+        .cat-select,
+        input.full,
+        textarea,
+        .btn-action,
+        .btn-round,
+        .recipe-btn,
+        .favorite-toggle {
+            font-family: inherit;
+        }
+
+        .cat-select {
+            padding: 10px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            min-width: 140px;
+        }
+
+        .card-body {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .meal-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 22px;
+            object-fit: cover;
+            display: block;
+            border: none;
+            flex-shrink: 0;
+            background: var(--bg);
+        }
+
+        .meal-img.placeholder {
+            border: none;
+            background: #f8fafc;
+            filter: grayscale(0.2) contrast(0.95);
+            color: var(--text-muted);
+        }
+
+        .meal-placeholder {
+            width: 110px;
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 22px;
+            border: 2px dashed var(--border);
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-size: 2rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .meal-info {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .meal-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            font-weight: 700;
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        .btn-round {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
+        }
+
+        .btn-round:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-dice {
+            background: var(--primary);
+            color: white;
+        }
+
+        .recipe-btn {
+            cursor: pointer;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 12px;
+            display: none;
+            width: fit-content;
+        }
+
+        .recipe-btn:hover,
+        .btn-action:hover,
+        .favorite-toggle:hover {
+            opacity: 0.95;
+        }
+
+        .favorite-toggle {
+            border: 1px solid transparent;
+            border-radius: 14px;
+            padding: 10px 14px;
+            background: #fff7ed;
+            color: #b45309;
+            transition: background 0.2s ease;
+        }
+
+        .favorite-toggle.active {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+        .btn-action {
+            padding: 15px;
+            border-radius: 18px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            background: var(--primary);
+            color: white;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-action.small {
+            width: auto;
+            padding: 12px 14px;
+        }
+
+        .btn-action.ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 5vh;
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: var(--card);
+            padding: 28px;
+            border-radius: 28px;
+            max-width: 640px;
+            width: 94%;
+            min-height: 200px;
+            position: relative;
+            margin-bottom: 32px;
+            text-align: left;
+        }
+
+        .modal-close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        #listContent {
+            text-align: left;
+            display: block;
+            width: 100%;
+        }
+
+        .shop-day-header {
+            color: var(--primary);
+            font-weight: 800;
+            margin: 25px 0 5px 0;
+            border-bottom: 2px solid var(--border);
+            font-size: 1.1rem;
+            text-align: left;
+        }
+
+        .shop-meal-name {
+            font-size: 0.95rem;
+            color: var(--accent);
+            margin-bottom: 12px;
+            font-style: italic;
+            text-align: left;
+        }
+
+        .shopping-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            text-align: left;
+        }
+
+        .shopping-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .shopping-list li.checked {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .shopping-list input[type="checkbox"] {
+            transform: scale(1.3);
+            accent-color: var(--accent);
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 10px 15px;
+            border-radius: 12px;
+            border: none;
+            background: var(--bg);
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .tab-btn svg {
+            width: 18px;
+            height: 18px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        textarea,
+        input.full {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        .message-success {
+            color: #047857;
+        }
+
+        .message-error {
+            color: var(--danger);
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #shoppingModal,
+            #shoppingModal * {
+                visibility: visible;
+            }
+            #shoppingModal {
+                position: static;
+                display: block !important;
+                width: auto;
+                height: auto;
+                background: transparent;
+            }
+            .modal-content {
+                box-shadow: none;
+                border: none;
+                width: auto;
+                margin: 0;
+                padding: 0;
+                background: transparent;
+            }
+            .modal-close,
+            .btn-action.small {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 720px) {
+            body {
+                padding: 20px 12px 32px;
+            }
+
+            .card-body {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .meal-img {
+                width: 100%;
+                height: 170px;
+            }
+
+            .app-top {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                justify-content: flex-start;
+            }
+        }
+    </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#10b981">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed', err));
+        }
+    </script>
+</head>
+<body>
+
+<div class="app-container">
+        <div class="app-top">
+            <div class="app-title">
+                <h1>Essensplan für die Woche</h1>
+                <p class="subtitle">Würfle Rezepte, speichere eigene Gerichte und erstelle deine Einkaufsliste.</p>
+            </div>
+            <div class="header-actions">
+                <button onclick="toggleTheme()" id="themeBtn" class="btn-action small">🌙</button>
+                <select id="portionSelect" class="cat-select" onchange="updatePortionFactor()" title="Portionsgröße auswählen">
+                    <option value="1">Originalzutatenmenge des Rezepts</option>
+                    <option value="2">2 Personen</option>
+                    <option value="4">4 Personen</option>
+                </select>
+            </div>
+        </div>
+        <div id="statusMessage" class="status-message"></div>
+
+        <div id="weekPlan"></div>
+
+        <button class="btn-action" onclick="generateShoppingList()">🛒 Einkaufsliste nach Tagen</button>
+        <button class="btn-action" onclick="openCustomEditor()">📝 Eigenes Rezept erstellen</button>
+        <button class="btn-action ghost" onclick="resetPlan()">✨ Plan zurücksetzen</button>
+    </div>
+<div id="shoppingModal" class="modal">
+    <div class="modal-content">
+        <span onclick="closeModal('shoppingModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
+        <h2 style="text-align: center; margin-bottom: 20px;">Einkaufsliste</h2>
+        <div style="text-align:center;margin-bottom:16px;"><button class="btn-action small" onclick="printShoppingList()">🖨️ Drucken</button></div>
+        <div id="listContent"></div>
+    </div>
+</div>
+
+<div id="recipeModal" class="modal">
+    <div class="modal-content">
+        <span onclick="closeRecipe()" class="modal-close">×</span>
+        <div class="modal-header">
+            <h2 id="modalTitle">Rezept</h2>
+            <button id="favoriteBtn" class="btn-action small favorite-toggle" onclick="toggleFavorite()">★ Favorit</button>
+        </div>
+        <div class="tab-nav">
+            <button id="tabBtnDE" class="tab-btn active" onclick="showTab('DE')">
+                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="36" height="24" fill="#000"/><rect y="8" width="36" height="8" fill="#D00"/><rect y="16" width="36" height="8" fill="#FFCE00"/></svg>
+                Deutsch
+            </button>
+            <button id="tabBtnEN" class="tab-btn" onclick="showTab('EN')">
+                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="36" height="24" fill="#012169"/><path d="M0 0l36 24M36 0L0 24" stroke="#fff" stroke-width="4"/><path d="M0 0l36 24M36 0L0 24" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#fff" stroke-width="4"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/></svg>
+                English
+            </button>
+            <button id="tabBtnVideo" class="tab-btn" onclick="showTab('Video')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#FF0000"/><path d="M9.5 8.5L15.5 12L9.5 15.5V8.5Z" fill="#fff"/></svg>
+                YouTube
+            </button>
+        </div>
+        <div id="contentDE" class="tab-content active"><div id="ingDE" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px;"></div><div id="insDE" style="white-space: pre-line; line-height: 1.6;"></div></div>
+        <div id="contentEN" class="tab-content"><div id="ingEN" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px;"></div><div id="insEN" style="white-space: pre-line; line-height: 1.6;"></div></div>
+        <div id="contentVideo" class="tab-content">
+            <div id="videoBox" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:15px; background:#000;"></div>
+            <div id="videoFallback" style="margin-top:12px; text-align:center; color:var(--text);"></div>
+        </div>
+    </div>
+</div>
+
+<div id="customModal" class="modal">
+    <div class="modal-content">
+        <span onclick="closeModal('customModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
+        <h2 style="text-align: center; color: var(--primary);">Neues Rezept</h2>
+        <input type="text" id="customName" class="full" placeholder="Name">
+        <textarea id="customIng" rows="5" placeholder="Zutaten (eine pro Zeile)"></textarea>
+        <textarea id="customIns" rows="5" placeholder="Zubereitung..."></textarea>
+        <button class="btn-action" style="background:var(--accent); color:white;" onclick="saveCustomRecipe()">💾 Speichern</button>
+    </div>
+</div>
+
+<script>
+    const tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+    const STORAGE_PLAN = 'gourmet_v43';
+    const STORAGE_RECIPES = 'my_recipes';
+    const STORAGE_THEME = 'theme';
+    const STORAGE_PORTION = 'portionFactor';
+
+    let mealStore = {};
+    let myRecipes = JSON.parse(localStorage.getItem(STORAGE_RECIPES) || '[]');
+    let translationCache = JSON.parse(localStorage.getItem('translation_cache') || '{}');
+    let portionFactor = Number(localStorage.getItem(STORAGE_PORTION) || '1');
+    const PLACEHOLDER_IMG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+            <rect width="220" height="220" rx="28" fill="#e2e8f0" />
+            <rect x="16" y="16" width="188" height="188" rx="28" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 6" />
+            <text x="110" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="800" fill="#0f172a">Noch frei</text>
+            <text x="110" y="108" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" fill="#334155">Würfeln, um ein Rezept zu wählen</text>
+            <text x="110" y="136" text-anchor="middle" font-family="Inter, sans-serif" font-size="26" font-weight="700" fill="#0f172a">?</text>
+        </svg>`);
+
+    function parseIngredientQuantity(line) {
+        const numberMatch = line.match(/^(\d+([\.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)(?=\s|$)/);
+        if (!numberMatch) return { scaled: line, hadQuantity: false };
+
+        let rawAmount = numberMatch[0];
+        let amount = 1;
+
+        if (rawAmount.includes('/')) {
+            const mixedMatch = rawAmount.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+            if (mixedMatch) {
+                amount = Number(mixedMatch[1]) + Number(mixedMatch[2]) / Number(mixedMatch[3]);
+            } else {
+                const fracMatch = rawAmount.match(/^(\d+)\/(\d+)$/);
+                if (fracMatch) {
+                    amount = Number(fracMatch[1]) / Number(fracMatch[2]);
+                }
+            }
+        } else {
+            amount = Number(rawAmount.replace(',', '.'));
+        }
+
+        const scaled = amount * portionFactor;
+        const formatted = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(2).replace(/\.00$/, '').replace(/\.(\d)0$/, '.$1');
+        return { scaled: line.replace(rawAmount, formatted), hadQuantity: true };
+    }
+
+    function scaleIngredient(line) {
+        if (portionFactor === 1) return line;
+        const result = parseIngredientQuantity(line);
+        return result.hadQuantity ? result.scaled : line;
+    }
+
+    function updatePortionFactor() {
+        const select = document.getElementById('portionSelect');
+        portionFactor = Number(select.value);
+        localStorage.setItem(STORAGE_PORTION, portionFactor);
+        const message = portionFactor === 1
+            ? 'Originalzutatenmenge des Rezepts aktiviert.'
+            : `Portionen eingestellt auf ${portionFactor} Personen.`;
+        showMessage(message, 'info');
+    }
+
+    function showMessage(text, type = 'info') {
+        const status = document.getElementById('statusMessage');
+        status.textContent = text;
+        status.className = `status-message message-${type}`;
+        if (type !== 'info') {
+            setTimeout(() => {
+                status.textContent = '';
+                status.className = 'status-message';
+            }, 4000);
+        }
+    }
+
+    function init() {
+        const container = document.getElementById('weekPlan');
+        const saved = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
+        const theme = localStorage.getItem(STORAGE_THEME) || 'light';
+
+        document.body.setAttribute('data-theme', theme);
+        updateThemeButton(theme);
+        document.getElementById('portionSelect').value = portionFactor;
+
+        container.innerHTML = '';
+        tage.forEach(tag => {
+            const data = saved[tag] || { title: "", img: "", cat: "", raw: null };
+            if (data.raw) mealStore[tag] = data.raw;
+            const imgSrc = data.img || PLACEHOLDER_IMG;
+            const imgClass = data.img ? 'meal-img' : 'meal-img placeholder';
+            const imgAlt = data.title || 'Noch nicht gewürfelt - Platzhalterbild';
+
+            container.innerHTML += `
+                <div class="day-card">
+                    <div class="card-top">
+                        <span class="day-label">${tag}</span>
+                        <select class="cat-select" id="cat-${tag}" onchange="save()">
+                            <option value="" ${data.cat === '' ? 'selected' : ''}>✨ Alles</option>
+                            <option value="MY" ${data.cat === 'MY' ? 'selected' : ''}>👤 Eigene</option>
+                            <option value="Vegetarian" ${data.cat === 'Vegetarian' ? 'selected' : ''}>🥗 Veggie</option>
+                            <option value="Pasta" ${data.cat === 'Pasta' ? 'selected' : ''}>🍝 Pasta</option>
+                            <option value="Seafood" ${data.cat === 'Seafood' ? 'selected' : ''}>🐟 Fisch</option>
+                            <option value="Chicken" ${data.cat === 'Chicken' ? 'selected' : ''}>🍗 Huhn</option>
+                            <option value="Beef" ${data.cat === 'Beef' ? 'selected' : ''}>🥩 Rind</option>
+                            <option value="Pork" ${data.cat === 'Pork' ? 'selected' : ''}>🍖 Schwein</option>
+                            <option value="Lamb" ${data.cat === 'Lamb' ? 'selected' : ''}>🐑 Lamm</option>
+                            <option value="Side" ${data.cat === 'Side' ? 'selected' : ''}>🍟 Beilagen</option>
+                            <option value="Starter" ${data.cat === 'Starter' ? 'selected' : ''}>🍲 Vorspeise</option>
+                            <option value="Dessert" ${data.cat === 'Dessert' ? 'selected' : ''}>🍰 Dessert</option>
+                            <option value="Breakfast" ${data.cat === 'Breakfast' ? 'selected' : ''}>☕ Frühstück</option>
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <img id="img-${tag}" class="${imgClass}" src="${imgSrc}" alt="${imgAlt}" />
+                        <div class="meal-info">
+                            <input type="text" id="input-${tag}" class="meal-input" value="${data.title}" readonly placeholder="Würfeln...">
+                            <div id="btn-${tag}" class="recipe-btn" onclick="openRecipe('${tag}')" style="display:${data.title ? 'block' : 'none'}">📖 Rezept</div>
+                        </div>
+                        <button class="btn-round btn-dice" onclick="fetchMeal('${tag}')">🎲</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    function splitLongText(text, maxLength = 450) {
+        const parts = [];
+        let remaining = text.trim();
+
+        while (remaining.length > 0) {
+            if (remaining.length <= maxLength) {
+                parts.push(remaining);
+                break;
+            }
+
+            let splitIndex = remaining.lastIndexOf('. ', maxLength);
+            if (splitIndex === -1) {
+                splitIndex = remaining.lastIndexOf(' ', maxLength);
+            }
+            if (splitIndex === -1) {
+                splitIndex = maxLength;
+            }
+
+            parts.push(remaining.slice(0, splitIndex + (remaining[splitIndex] === ' ' ? 0 : 0)).trim());
+            remaining = remaining.slice(splitIndex).trim();
+        }
+
+        return parts;
+    }
+
+    async function translateText(text, lang) {
+        if (!text) return '';
+        
+        const cacheKey = `${text}_${lang}`;
+        if (translationCache[cacheKey]) return translationCache[cacheKey];
+
+        const parts = splitLongText(text, 450);
+        const translations = [];
+
+        for (const part of parts) {
+            try {
+                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(part)}&langpair=en|${lang}`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    translations.push(await translateWithGoogle(part, lang));
+                    continue;
+                }
+                const data = await res.json();
+                const translated = data.responseData?.translatedText;
+                if (translated && translated !== part) {
+                    translations.push(translated);
+                } else {
+                    translations.push(await translateWithGoogle(part, lang));
+                }
+            } catch (e) {
+                translations.push(await translateWithGoogle(part, lang));
+            }
+        }
+
+        const result = translations.join(' ');
+        translationCache[cacheKey] = result;
+        localStorage.setItem('translation_cache', JSON.stringify(translationCache));
+        return result;
+    }
+
+    async function translateWithGoogle(text, lang) {
+        try {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`;
+            const res = await fetch(url);
+            if (!res.ok) return text;
+            const data = await res.json();
+            return data[0].map(s => s[0]).join('') || text;
+        } catch (e) {
+            return text;
+        }
+    }
+
+    function getYoutubeVideoId(url) {
+        if (!url) return null;
+        try {
+            const parsed = new URL(url);
+            if (parsed.hostname.includes('youtu.be')) {
+                return parsed.pathname.slice(1);
+            }
+            if (parsed.hostname.includes('youtube.com')) {
+                if (parsed.searchParams.has('v')) {
+                    return parsed.searchParams.get('v');
+                }
+                const pathMatch = parsed.pathname.match(/embed\/([a-zA-Z0-9_-]+)/);
+                if (pathMatch) {
+                    return pathMatch[1];
+                }
+            }
+        } catch (e) {
+            const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+        return null;
+    }
+
+    function updateThemeButton(theme) {
+        const btn = document.getElementById('themeBtn');
+        btn.textContent = theme === 'light' ? '🌙' : '☀️';
+        btn.title = theme === 'light' ? 'Dunkles Theme' : 'Helles Theme';
+    }
+
+    function openCustomEditor() {
+        document.getElementById('customModal').style.display = 'flex';
+    }
+
+    function saveCustomRecipe() {
+        const name = document.getElementById('customName').value.trim();
+        const ingRaw = document.getElementById('customIng').value.split('\n').map(i => i.trim()).filter(Boolean);
+        const ins = document.getElementById('customIns').value.trim();
+
+        if (!name || ingRaw.length === 0) {
+            return alert('Bitte Name und Zutaten angeben!');
+        }
+
+        myRecipes.push({ strMeal: name, strInstructions: ins, isCustom: true, ingredients: ingRaw });
+        localStorage.setItem(STORAGE_RECIPES, JSON.stringify(myRecipes));
+
+        document.getElementById('customName').value = '';
+        document.getElementById('customIng').value = '';
+        document.getElementById('customIns').value = '';
+        closeModal('customModal');
+    }
+
+    async function fetchMeal(tag) {
+        const category = document.getElementById(`cat-${tag}`).value;
+        let meal;
+
+        try {
+            if (category === 'MY') {
+                if (myRecipes.length === 0) {
+                    return alert('Keine eigenen Rezepte vorhanden.');
+                }
+                meal = myRecipes[Math.floor(Math.random() * myRecipes.length)];
+            } else {
+                const apiURL = category ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}` : 'https://www.themealdb.com/api/json/v1/1/random.php';
+                const res = await fetch(apiURL);
+                if (!res.ok) throw new Error('API-Anfrage fehlgeschlagen');
+
+                const data = await res.json();
+                if (!data.meals?.length) {
+                    return alert('Für diese Kategorie wurde kein Rezept gefunden.');
+                }
+
+                const tempMeal = data.meals[Math.floor(Math.random() * data.meals.length)];
+                const dRes = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${tempMeal.idMeal}`);
+                if (!dRes.ok) throw new Error('Detaildaten konnten nicht geladen werden');
+
+                const dData = await dRes.json();
+                meal = dData.meals?.[0];
+                if (!meal) {
+                    return alert('Das Rezept konnte nicht geladen werden.');
+                }
+            }
+
+            const nameDE = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
+            const imgSrc = meal.isCustom ? 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=200' : meal.strMealThumb;
+
+            document.getElementById(`input-${tag}`).value = nameDE;
+            document.getElementById(`img-${tag}`).src = imgSrc;
+            document.getElementById(`img-${tag}`).style.display = 'block';
+            document.getElementById(`btn-${tag}`).style.display = 'block';
+
+            mealStore[tag] = meal;
+            save();
+        } catch (error) {
+            console.error(error);
+            alert('Fehler beim Laden des Rezepts. Bitte versuche es erneut.');
+        }
+    }
+
+    async function openRecipe(tag) {
+        const meal = mealStore[tag];
+        if (!meal) return;
+
+        const title = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('recipeModal').style.display = 'flex';
+
+        const tabBtnEN = document.getElementById('tabBtnEN');
+        const tabBtnVideo = document.getElementById('tabBtnVideo');
+
+        let ingsEN = [];
+        if (meal.isCustom) {
+            ingsEN = meal.ingredients;
+            tabBtnEN.style.display = 'none';
+            tabBtnVideo.style.display = 'none';
+        } else {
+            tabBtnEN.style.display = 'block';
+            for (let i = 1; i <= 20; i++) {
+                const ingredient = meal[`strIngredient${i}`];
+                if (ingredient) {
+                    ingsEN.push(`${meal[`strMeasure${i}`]} ${ingredient}`.trim());
+                }
+            }
+        }
+
+        const displayedIngredients = ingsEN.map(line => scaleIngredient(line));
+        document.getElementById('ingEN').innerHTML = displayedIngredients.map(i => `<div>${i}</div>`).join('');
+        document.getElementById('insEN').innerText = meal.strInstructions || '';
+
+        const translatedIngredients = meal.isCustom
+            ? displayedIngredients
+            : await Promise.all(displayedIngredients.map(i => translateText(i, 'de')));
+        document.getElementById('ingDE').innerHTML = translatedIngredients.map(i => `<div style="background:var(--bg);padding:8px;border-radius:10px;">${i}</div>`).join('');
+        document.getElementById('insDE').innerText = meal.isCustom ? meal.strInstructions : await translateText(meal.strInstructions, 'de');
+
+        const vId = !meal.isCustom && meal.strYoutube ? getYoutubeVideoId(meal.strYoutube) : null;
+        const videoBox = document.getElementById('videoBox');
+        const videoFallback = document.getElementById('videoFallback');
+
+        if (vId) {
+            tabBtnVideo.style.display = 'block';
+            const youtubeUrl = `https://www.youtube.com/watch?v=${vId}`;
+            const embedUrl = `https://www.youtube-nocookie.com/embed/${vId}?rel=0&modestbranding=1&showinfo=0`;
+
+            if (location.protocol === 'file:') {
+                videoBox.innerHTML = '';
+                videoFallback.innerHTML = `<div>Dieses Video kann lokal nicht eingebettet werden. Bitte lade die Seite über Live Server oder direkt auf YouTube.</div><a href="${youtubeUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:10px;padding:10px 16px;border-radius:14px;background:var(--primary);color:#fff;text-decoration:none;">▶️ Auf YouTube ansehen</a>`;
+            } else {
+                videoBox.innerHTML = `<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen title="YouTube video player"></iframe>`;
+                videoFallback.innerHTML = `<div style="margin-top:10px;"><a href="${youtubeUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">▶️ Bei Problemen direkt auf YouTube ansehen</a></div>`;
+            }
+        } else {
+            tabBtnVideo.style.display = 'none';
+            videoBox.innerHTML = '';
+            videoFallback.innerHTML = '';
+        }
+
+        showTab('DE');
+    }
+
+    async function generateShoppingList() {
+        const content = document.getElementById('listContent');
+        content.innerHTML = '⏳ Liste wird erstellt...';
+        document.getElementById('shoppingModal').style.display = 'flex';
+
+        let html = '';
+        for (let tag of tage) {
+            const m = mealStore[tag];
+            if (!m) continue;
+
+            const ingredients = [];
+            if (m.isCustom) {
+                ingredients.push(...m.ingredients.map(line => scaleIngredient(line)));
+            } else {
+                for (let i = 1; i <= 20; i++) {
+                    const ingredient = m[`strIngredient${i}`];
+                    if (ingredient) {
+                        ingredients.push(scaleIngredient(`${m[`strMeasure${i}`]} ${ingredient}`.trim()));
+                    }
+                }
+            }
+
+            const mealTitle = m.isCustom ? m.strMeal : await translateText(m.strMeal, 'de');
+            const translatedItems = m.isCustom
+                ? ingredients
+                : await Promise.all(ingredients.map(i => translateText(i, 'de')));
+
+            html += `<div class="shop-day-header">${tag}</div><div class="shop-meal-name">${mealTitle}</div><ul class="shopping-list">`;
+            html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
+            html += `</ul>`;
+        }
+
+        content.innerHTML = html || 'Kein Plan vorhanden.';
+    }
+
+    async function printShoppingList() {
+        const modal = document.getElementById('shoppingModal');
+        if (modal.style.display !== 'flex') {
+            await generateShoppingList();
+        }
+        window.print();
+    }
+
+    function showTab(lang) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('content' + lang).classList.add('active');
+        document.getElementById('tabBtn' + lang).classList.add('active');
+    }
+
+    function save() {
+        const data = {};
+        tage.forEach(t => {
+            data[t] = {
+                title: document.getElementById(`input-${t}`).value,
+                img: document.getElementById(`img-${t}`).src,
+                cat: document.getElementById(`cat-${t}`).value,
+                raw: mealStore[t] || null,
+            };
+        });
+        localStorage.setItem(STORAGE_PLAN, JSON.stringify(data));
+    }
+
+    function toggleTheme() {
+        const current = document.body.getAttribute('data-theme') || 'light';
+        const next = current === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem(STORAGE_THEME, next);
+        updateThemeButton(next);
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    function closeRecipe() {
+        closeModal('recipeModal');
+        document.getElementById('videoBox').innerHTML = '';
+    }
+
+    function resetPlan() {
+        if (confirm('Plan zurücksetzen?')) {
+            localStorage.removeItem(STORAGE_PLAN);
+            mealStore = {};
+            init();
+            showMessage('Plan wurde zurückgesetzt.', 'info');
+        }
+    }
+
+    window.addEventListener('click', event => {
+        const modal = event.target.closest('.modal');
+        if (modal && event.target === modal) {
+            closeModal(modal.id);
+        }
+    });
+
+    init();
+</script>
+</body>
+</html>
