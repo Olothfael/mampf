@@ -950,10 +950,11 @@
                 }
             }
 
-            const mealTitle = m.isCustom ? m.strMeal : await translateText(m.strMeal, 'de');
-            const translatedItems = m.isCustom
-                ? ingredients
-                : await Promise.all(ingredients.map(i => translateText(i, 'de')));
+            // Parallelisierte Übersetzung für massive Geschwindigkeitsvorteile (korrigiert)
+            const [mealTitle, ...translatedItems] = await Promise.all([
+                m.isCustom ? m.strMeal : translateText(m.strMeal, 'de'),
+                ...ingredients.map(i => m.isCustom ? i : translateText(i, 'de'))
+            ]);
 
             html += `<div class="shop-day-header">${tag}</div><div class="shop-meal-name">${mealTitle}</div><ul class="shopping-list">`;
             html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
