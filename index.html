@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Essensplan für die Woche</title>
+    <title>Essensplan & Einkaufsliste</title>
     <!-- PWA Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,9 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
+            --primary: #6366f1; /* Modernes Indigo */
             --primary-hover: #4f46e5;
-            --accent: #f59e0b;
+            --accent: #f59e0b; /* Warmes Amber/Orange */
             --bg: #f8fafc;
             --body-bg: #f1f5f9;
             --card: #ffffff;
@@ -35,9 +35,7 @@
             --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
@@ -47,156 +45,85 @@
             color: var(--text);
             display: flex;
             justify-content: center;
-            padding: 30px 16px 40px;
+            padding: 20px 16px 40px;
         }
 
         .app-container {
             width: 100%;
             max-width: 760px;
-            padding: 24px;
             display: grid;
-            gap: 18px;
+            gap: 20px;
         }
 
         .app-top {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 18px;
             flex-wrap: wrap;
+            gap: 20px;
         }
 
-        .app-title h1 {
-            margin: 0;
-            font-size: clamp(2rem, 3vw, 2.6rem);
-            line-height: 1.1;
-        }
-
-        .subtitle {
-            margin: 10px 0 0;
-            color: var(--text-muted);
-            max-width: 480px;
-            font-size: 0.98rem;
-            line-height: 1.6;
-        }
-
-        .day-card {
-            background: var(--card);
-            border-radius: 24px;
-            padding: 22px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
-            transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-
-        .day-card:hover {
-            border-color: var(--primary);
-        }
+        .app-title h1 { margin: 0; font-size: 2.2rem; line-height: 1.1; }
+        .subtitle { margin: 8px 0 0; color: var(--text-muted); font-size: 0.95rem; }
 
         .header-actions {
             display: flex;
-            flex-wrap: wrap;
             gap: 10px;
             align-items: center;
-            width: min(100%, 320px);
         }
 
         .status-message {
             min-height: 24px;
-            font-size: 0.95rem;
-            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
         }
+        .message-error { color: var(--danger); font-weight: 700; }
+        .message-success { color: var(--success); font-weight: 700; }
 
-        .status-message.message-error {
-            color: var(--danger);
-            font-weight: 700;
-        }
-
-        .status-message.message-success {
-            color: var(--success);
-            font-weight: 700;
+        .day-card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
         }
 
         .card-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 15px;
         }
 
-        .day-label {
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--accent);
-        }
-
-        .favorite-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            color: var(--danger);
-        }
-
-        .cat-select,
-        input.full,
-        textarea,
-        .btn-action,
-        .btn-round,
-        .recipe-btn,
-        .favorite-toggle {
-            font-family: inherit;
-        }
+        .day-label { font-weight: 800; font-size: 1.1rem; color: var(--accent); }
 
         .cat-select {
             padding: 8px 12px;
-            border-radius: 14px;
+            border-radius: 12px;
             border: 1px solid var(--border);
             background: var(--bg);
             color: var(--text);
-            font-size: 0.9rem;
             font-weight: 700;
             cursor: pointer;
-            min-width: 140px;
-            transition: border-color 0.2s;
-        }
-
-        .cat-select:focus {
-            border-color: var(--primary);
-            outline: none;
         }
 
         .card-body {
             display: flex;
-            gap: 16px;
+            gap: 15px;
             align-items: center;
-            flex-wrap: wrap;
         }
 
         .meal-img {
-            width: 110px;
-            height: 110px;
-            border-radius: 20px;
+            width: 100px;
+            height: 100px;
+            border-radius: 15px;
             object-fit: cover;
-            display: block;
+            background: var(--bg);
             border: 1px solid var(--border);
-            flex-shrink: 0;
-            background: var(--bg);
         }
+        .meal-img.placeholder { border: 2px dashed var(--border); }
 
-        .meal-img.placeholder {
-            border: 2px dashed var(--border);
-            background: var(--bg);
-            filter: grayscale(0.2) contrast(0.95);
-        }
-
-        .meal-info {
-            flex-grow: 1;
-            min-width: 0;
-        }
-
+        .meal-info { flex-grow: 1; min-width: 0; }
         .meal-input {
             width: 100%;
             border: none;
@@ -205,98 +132,51 @@
             font-weight: 700;
             font-size: 1.1rem;
             outline: none;
+            margin-bottom: 8px;
         }
 
         .btn-round {
-            width: 48px;
-            height: 48px;
-            border-radius: 16px;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
             border: none;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
-            transition: transform 0.2s ease;
-        }
-
-        .btn-round:hover {
-            transform: translateY(-1px);
-        }
-
-        .btn-dice {
             background: var(--accent);
             color: white;
+            transition: transform 0.2s;
         }
+        .btn-round:hover { transform: scale(1.05); }
 
         .recipe-btn {
+            display: inline-block;
             cursor: pointer;
             background: var(--bg);
             border: 1px solid var(--border);
-            padding: 10px 16px;
-            border-radius: 14px;
+            padding: 8px 12px;
+            border-radius: 10px;
             font-size: 0.85rem;
             font-weight: 700;
-            color: var(--accent);
-            margin-top: 12px;
-            display: none;
-            width: fit-content;
-        }
-
-        .recipe-btn:hover,
-        .btn-action:hover,
-        .favorite-toggle:hover {
-            opacity: 0.95;
-        }
-
-        .favorite-toggle {
-            border: 1px solid transparent;
-            border-radius: 14px;
-            padding: 10px 14px;
-            background: #fff7ed;
-            color: #b45309;
-            transition: background 0.2s ease;
-        }
-
-        .favorite-toggle.active {
-            background: #fee2e2;
-            color: var(--danger);
+            color: var(--primary);
         }
 
         .btn-action {
-            padding: 15px;
-            border-radius: 18px;
+            padding: 14px;
+            border-radius: 15px;
             border: none;
             font-weight: 800;
             cursor: pointer;
             width: 100%;
-            margin-top: 10px;
             background: var(--primary);
             color: white;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
         }
-
-        .btn-action.small {
-            width: auto;
-            padding: 12px 14px;
-        }
-
-        .btn-action.ghost {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .btn-action:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .btn-action.ghost:hover {
-            background: var(--bg);
-            color: var(--primary);
-        }
+        .btn-action:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        .btn-action.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-action.small { width: auto; padding: 10px 16px; font-size: 0.9rem; }
 
         .modal {
             display: none;
@@ -306,221 +186,39 @@
             z-index: 1000;
             justify-content: center;
             align-items: flex-start;
-            padding-top: 5vh;
-            backdrop-filter: blur(10px);
+            padding: 40px 16px;
+            backdrop-filter: blur(5px);
             overflow-y: auto;
         }
 
         .modal-content {
             background: var(--card);
-            padding: 28px;
-            border-radius: 28px;
-            max-width: 640px;
-            width: 94%;
-            min-height: 200px;
+            padding: 24px;
+            border-radius: 24px;
+            max-width: 600px;
+            width: 100%;
             position: relative;
-            margin-bottom: 32px;
-            text-align: left;
         }
 
-        .modal-close {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            cursor: pointer;
-            font-size: 1.5rem;
-            color: var(--text);
-        }
+        .modal-close { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 1.5rem; }
 
-        .sync-badge {
-            font-size: 0.75rem;
-            padding: 4px 8px;
-            border-radius: 8px;
-            background: var(--accent);
-            color: white;
-            font-weight: 800;
-        }
+        .tab-nav { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 15px; padding-bottom: 8px; }
+        .tab-btn { padding: 8px 12px; border-radius: 8px; border: none; background: var(--bg); cursor: pointer; font-weight: 700; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-        }
+        .sync-badge { font-size: 0.75rem; padding: 4px 8px; border-radius: 8px; background: var(--accent); color: white; font-weight: 800; }
 
-        #listContent {
-            text-align: left;
-            display: block;
-            width: 100%;
-        }
+        .shopping-list { list-style: none; padding: 0; }
+        .shopping-list li { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; cursor: pointer; }
+        .shopping-list li.checked { opacity: 0.5; text-decoration: line-through; }
+        .shop-day-header { font-weight: 800; color: var(--accent); margin-top: 20px; border-bottom: 2px solid var(--border); }
 
-        .shop-day-header {
-            color: var(--accent);
-            font-weight: 800;
-            margin: 25px 0 5px 0;
-            border-bottom: 2px solid var(--border);
-            font-size: 1.1rem;
-            text-align: left;
-        }
-
-        .shop-meal-name {
-            font-size: 0.95rem;
-            color: var(--primary);
-            margin-bottom: 12px;
-            font-style: italic;
-            text-align: left;
-        }
-
-        .shopping-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            width: 100%;
-            text-align: left;
-        }
-
-        .shopping-list li {
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
-            cursor: pointer;
-            text-align: left;
-        }
-
-        .shopping-list li.checked {
-            text-decoration: line-through;
-            opacity: 0.5;
-        }
-
-        .shopping-list input[type="checkbox"] {
-            transform: scale(1.3);
-            accent-color: var(--accent);
-            margin-top: 3px;
-            flex-shrink: 0;
-        }
-
-        .tab-nav {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-            overflow-x: auto;
-        }
-
-        .tab-btn {
-            padding: 10px 15px;
-            border-radius: 12px;
-            border: none;
-            background: var(--bg);
-            color: var(--text);
-            cursor: pointer;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .tab-btn svg {
-            width: 18px;
-            height: 18px;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-
-        .tab-btn.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        textarea,
-        input.full {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: var(--bg);
-            color: var(--text);
-            margin-bottom: 10px;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-
-        textarea:focus, input.full:focus {
-            border-color: var(--primary);
-            outline: none;
-        }
-
-        .message-success {
-            color: #047857;
-        }
-
-        .message-error {
-            color: var(--danger);
-        }
-
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #shoppingModal,
-            #shoppingModal * {
-                visibility: visible;
-            }
-            #shoppingModal {
-                position: static;
-                display: block !important;
-                width: auto;
-                height: auto;
-                background: transparent;
-            }
-            .modal-content {
-                box-shadow: none;
-                border: none;
-                width: auto;
-                margin: 0;
-                padding: 0;
-                background: transparent;
-            }
-            .modal-close,
-            .btn-action.small {
-                display: none !important;
-            }
-        }
-
-        @media (max-width: 720px) {
-            body {
-                padding: 20px 12px 32px;
-            }
-
-            .card-body {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .meal-img {
-                width: 100%;
-                height: 170px;
-            }
-
-            .app-top {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .header-actions {
-                justify-content: flex-start;
-            }
+        @media (max-width: 600px) {
+            .card-body { flex-direction: column; text-align: center; }
+            .meal-img { width: 100%; height: 150px; }
+            .recipe-btn { margin: 0 auto; }
         }
     </style>
     <link rel="manifest" href="manifest.json">
@@ -538,38 +236,38 @@
 <body>
 
 <div class="app-container">
-        <div class="app-top">
-            <div class="app-title">
-                <h1>Essensplan für die Woche</h1>
-                <p class="subtitle">Würfle Rezepte, speichere eigene Gerichte und erstelle deine Einkaufsliste.</p>
-                <div id="syncStatus" class="sync-badge" style="display:none; width:fit-content; margin-top:8px;">☁️ Cloud Synchronisation aktiv</div>
-            </div>
-            <div class="header-actions">
-                <button onclick="toggleTheme()" id="themeBtn" class="btn-action small">🌙</button>
-                <select id="portionSelect" class="cat-select" onchange="updatePortionFactor()" title="Portionsgröße auswählen">
-                    <option value="1">Originalzutatenmenge des Rezepts</option>
-                    <option value="2">2 Personen</option>
-                    <option value="4">4 Personen</option>
-                </select>
-            </div>
+    <div class="app-top">
+        <div class="app-title">
+            <h1>Essensplan für die Woche</h1>
+            <p class="subtitle">Plane deine Woche und teile sie mit anderen.</p>
+            <div id="syncStatus" class="sync-badge" style="display:none; width:fit-content; margin-top:8px;">☁️ Cloud Synchronisation aktiv</div>
         </div>
-        <div id="statusMessage" class="status-message"></div>
-
-        <div id="weekPlan"></div>
-
-        <button class="btn-action" onclick="window.generateShoppingList()">🛒 Einkaufsliste nach Tagen</button>
-        <button class="btn-action ghost" onclick="window.openSyncModal()">👥 Gemeinsam nutzen / Account</button>
-        <button class="btn-action" onclick="window.openCustomEditor()">📝 Eigenes Rezept erstellen</button>
-        <button class="btn-action ghost" onclick="window.resetPlan()">✨ Plan zurücksetzen</button>
+        <div class="header-actions">
+            <button onclick="window.toggleTheme()" id="themeBtn" class="btn-action small">🌙</button>
+            <select id="portionSelect" class="cat-select" onchange="window.updatePortionFactor()">
+                <option value="1">1 Person</option>
+                <option value="2">2 Personen</option>
+                <option value="4">4 Personen</option>
+            </select>
+        </div>
     </div>
 
+    <div id="statusMessage" class="status-message"></div>
+    <div id="weekPlan"></div>
+
+    <button class="btn-action" onclick="window.generateShoppingList()">🛒 Einkaufsliste öffnen</button>
+    <button class="btn-action ghost" onclick="window.openSyncModal()">👥 Haushalt teilen</button>
+    <button class="btn-action" onclick="window.openCustomEditor()">📝 Eigenes Rezept erstellen</button>
+    <button class="btn-action ghost" onclick="window.resetPlan()">✨ Plan zurücksetzen</button>
+</div>
+
+<!-- Modals -->
 <div id="shoppingModal" class="modal">
     <div class="modal-content">
-        <span onclick="window.closeModal('shoppingModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
-        <h2 style="text-align: center; margin-bottom: 20px;">Einkaufsliste</h2>
-        <div style="text-align:center;margin-bottom:16px;">
-            <button class="btn-action small" onclick="window.printShoppingList()">🖨️ Drucken</button>
-            <button class="btn-action small" style="background:#25D366; color:white; margin-left:8px;" onclick="window.shareWhatsApp()">📱 WhatsApp</button>
+        <span onclick="window.closeModal('shoppingModal')" class="modal-close">×</span>
+        <h2 style="text-align: center;">Einkaufsliste</h2>
+        <div style="text-align:center; margin-bottom:15px;">
+            <button class="btn-action small" style="background:#25D366; color:white;" onclick="window.shareWhatsApp()">📱 WhatsApp</button>
         </div>
         <div id="listContent"></div>
     </div>
@@ -578,52 +276,50 @@
 <div id="recipeModal" class="modal">
     <div class="modal-content">
         <span onclick="window.closeRecipe()" class="modal-close">×</span>
-        <div class="modal-header">
-            <h2 id="modalTitle">Rezept</h2>
-            <button id="favoriteBtn" class="btn-action small favorite-toggle" onclick="window.toggleFavorite()">★ Favorit</button>
-        </div>
+        <h2 id="modalTitle">Rezept</h2>
         <div class="tab-nav">
             <button id="tabBtnDE" class="tab-btn active" onclick="window.showTab('DE')">Deutsch</button>
             <button id="tabBtnEN" class="tab-btn" onclick="window.showTab('EN')">English</button>
-            <button id="tabBtnVideo" class="tab-btn" onclick="window.showTab('Video')">YouTube</button>
         </div>
-        <div id="contentDE" class="tab-content active"><div id="ingDE" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px;"></div><div id="insDE" style="white-space: pre-line; line-height: 1.6;"></div></div>
-        <div id="contentEN" class="tab-content"><div id="ingEN" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px;"></div><div id="insEN" style="white-space: pre-line; line-height: 1.6;"></div></div>
-        <div id="contentVideo" class="tab-content">
-            <div id="videoBox" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:15px; background:#000;"></div>
-            <div id="videoFallback" style="margin-top:12px; text-align:center; color:var(--text);"></div>
+        <div id="contentDE" class="tab-content active">
+            <div id="ingDE" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
+            <div id="insDE" style="white-space: pre-line;"></div>
+        </div>
+        <div id="contentEN" class="tab-content">
+            <div id="ingEN" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
+            <div id="insEN" style="white-space: pre-line;"></div>
         </div>
     </div>
 </div>
 
 <div id="customModal" class="modal">
     <div class="modal-content">
-        <span onclick="window.closeModal('customModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
-        <h2 style="text-align: center; color: var(--primary);">Neues Rezept</h2>
-        <input type="text" id="customName" class="full" placeholder="Name">
-        <textarea id="customIng" rows="5" placeholder="Zutaten (eine pro Zeile)"></textarea>
-        <textarea id="customIns" rows="5" placeholder="Zubereitung..."></textarea>
-        <label style="display:block; margin-bottom:8px; font-weight:700; font-size:0.9rem;">Foto (optional):</label>
-        <input type="file" id="customImgInput" class="full" accept="image/*" style="margin-bottom:10px;">
-        <button class="btn-action" style="background:var(--accent); color:white;" onclick="window.saveCustomRecipe()">💾 Speichern</button>
+        <span onclick="window.closeModal('customModal')" class="modal-close">×</span>
+        <h2>Neues Rezept</h2>
+        <input type="text" id="customName" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border);" placeholder="Rezeptname">
+        <textarea id="customIng" rows="4" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border);" placeholder="Zutaten (eine pro Zeile)"></textarea>
+        <textarea id="customIns" rows="4" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border);" placeholder="Zubereitung"></textarea>
+        <p style="font-size:0.8rem; font-weight:bold; margin-bottom:5px;">Foto hinzufügen:</p>
+        <input type="file" id="customImgInput" accept="image/*" style="margin-bottom:15px; width:100%;">
+        <button class="btn-action" onclick="window.saveCustomRecipe()">💾 Speichern</button>
     </div>
 </div>
 
 <div id="syncModal" class="modal">
     <div class="modal-content">
-        <span onclick="window.closeModal('syncModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
-        <h2 style="text-align: center; color: var(--primary);">Gemeinsam planen</h2>
-        <p style="font-size: 0.9rem; color: var(--text-muted); text-align:center;">Gib eine Haushalts-ID ein, um den Plan mit anderen zu teilen.</p>
-        <input type="text" id="householdIdInput" class="full" placeholder="z.B. familie-mustermann">
-        <button class="btn-action" onclick="window.joinHousehold()">🆔 Haushalt beitreten / Erstellen</button>
-        <p id="householdInfo" style="font-size: 0.8rem; margin-top: 15px; text-align: center;"></p>
-        <button class="btn-action ghost" onclick="window.leaveHousehold()">Alleine nutzen (Lokal)</button>
+        <span onclick="window.closeModal('syncModal')" class="modal-close">×</span>
+        <h2>Gemeinsam planen</h2>
+        <p>Gib eine Haushalts-ID ein (z.B. dein Name), um den Plan zu teilen.</p>
+        <input type="text" id="householdIdInput" style="width:100%; padding:10px; margin-bottom:10px; border-radius:10px; border:1px solid var(--border);" placeholder="Haushalts-ID">
+        <button class="btn-action" onclick="window.joinHousehold()">🆔 Verbinden</button>
+        <p id="householdInfo" style="text-align:center; font-size:0.8rem; margin-top:10px;"></p>
+        <button class="btn-action ghost" onclick="window.leaveHousehold()">Verbindung trennen</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCHB9cUJ2LcQgtKoD9iUp1JtRgGzsFFLYQ",
@@ -631,34 +327,11 @@
         projectId: "mampfi",
         storageBucket: "mampfi.firebasestorage.app",
         messagingSenderId: "972491371290",
-        appId: "1:972491371290:web:717f31db1ad003a8e432a3",
-        measurementId: "G-H9JBMZSEQC"
+        appId: "1:972491371290:web:717f31db1ad003a8e432a3"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-    async function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = e => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let w = img.width, h = img.height;
-                    if (w > h) { if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; } }
-                    else { if (h > maxHeight) { w *= maxHeight / h; h = maxHeight; } }
-                    canvas.width = w; canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-            };
-            reader.onerror = reject;
-        });
-    }
 
     const tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
     const STORAGE_PLAN = 'gourmet_v43';
@@ -667,77 +340,66 @@
     const STORAGE_PORTION = 'portionFactor';
     const STORAGE_HOUSEHOLD = 'household_id';
 
-    let householdId = localStorage.getItem(STORAGE_HOUSEHOLD) || null;
-    let translationCache = JSON.parse(localStorage.getItem('translation_cache') || '{}');
-    let portionFactor = Number(localStorage.getItem(STORAGE_PORTION) || '1');
     let mealStore = {};
     let myRecipes = JSON.parse(localStorage.getItem(STORAGE_RECIPES) || '[]');
+    let translationCache = JSON.parse(localStorage.getItem('translation_cache') || '{}');
+    let portionFactor = Number(localStorage.getItem(STORAGE_PORTION) || '1');
+    let householdId = localStorage.getItem(STORAGE_HOUSEHOLD) || null;
     let isRemoteUpdate = false;
 
     const PLACEHOLDER_IMG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
-            <rect width="220" height="220" rx="28" fill="#e2e8f0" />
-            <rect x="16" y="16" width="188" height="188" rx="28" fill="#ffffff" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 6" />
-            <text x="110" y="84" text-anchor="middle" font-family="Inter, sans-serif" font-size="16" font-weight="800" fill="#0f172a">Noch frei</text>
-            <text x="110" y="108" text-anchor="middle" font-family="Inter, sans-serif" font-size="12" fill="#334155">Würfeln, um ein Rezept zu wählen</text>
-            <text x="110" y="136" text-anchor="middle" font-family="Inter, sans-serif" font-size="26" font-weight="700" fill="#0f172a">?</text>
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+            <rect width="100" height="100" fill="#e2e8f0" />
+            <text x="50" y="55" text-anchor="middle" font-size="30" fill="#94a3b8">🎲</text>
         </svg>`);
 
-    function parseIngredientQuantity(line) {
-        const numberMatch = line.match(/^(\d+([\.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)(?=\s|$)/);
-        if (!numberMatch) return { scaled: line, hadQuantity: false };
-
-        let rawAmount = numberMatch[0];
-        let amount = 1;
-
-        if (rawAmount.includes('/')) {
-            const mixedMatch = rawAmount.match(/^(\d+)\s+(\d+)\/(\d+)$/);
-            if (mixedMatch) {
-                amount = Number(mixedMatch[1]) + Number(mixedMatch[2]) / Number(mixedMatch[3]);
-            } else {
-                const fracMatch = rawAmount.match(/^(\d+)\/(\d+)$/);
-                if (fracMatch) {
-                    amount = Number(fracMatch[1]) / Number(fracMatch[2]);
-                }
-            }
-        } else {
-            amount = Number(rawAmount.replace(',', '.'));
-        }
-
-        const scaled = amount * portionFactor;
-        const formatted = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(2).replace(/\.00$/, '').replace(/\.(\d)0$/, '.$1');
-        return { scaled: line.replace(rawAmount, formatted), hadQuantity: true };
+    async function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = 400, h = (img.height / img.width) * 400; // Max width 400px
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); // JPEG mit 70% Qualität
+                };
+            };
+        });
     }
 
     window.scaleIngredient = function(line) {
         if (portionFactor === 1) return line;
-        const result = parseIngredientQuantity(line);
-        return result.hadQuantity ? result.scaled : line;
+        const numberMatch = line.match(/^(\d+([\.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)(?=\s|$)/);
+        if (!numberMatch) return line;
+
+        const raw = numberMatch[0].replace(',', '.');
+        let amount = 0;
+
+        if (raw.includes(' ') || raw.includes('/')) {
+            const parts = raw.split(/\s+/); // Split by space for mixed fractions
+            parts.forEach(p => {
+                if (p.includes('/')) {
+                    const [n, d] = p.split('/');
+                    amount += (Number(n) / Number(d));
+                } else {
+                    amount += Number(p);
+                }
+            });
+        } else {
+            amount = Number(raw);
+        }
+
+        let scaled = amount * portionFactor;
+        let formatted = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(1); // Eine Nachkommastelle
+        return line.replace(numberMatch[0], formatted);
     };
 
-    window.updatePortionFactor = function() {
-        const select = document.getElementById('portionSelect');
-        portionFactor = Number(select.value);
-        localStorage.setItem(STORAGE_PORTION, portionFactor);
-        const message = portionFactor === 1
-            ? 'Originalzutatenmenge des Rezepts aktiviert.'
-            : `Portionen eingestellt auf ${portionFactor} Personen.`;
-        window.showMessage(message, 'info');
-        window.init();
-    };
-
-    window.showMessage = function(text, type = 'info') {
-        const status = document.getElementById('statusMessage');
-        if (!status) return;
-        status.textContent = text;
-        status.className = `status-message message-${type}`;
-        setTimeout(() => {
-            status.textContent = '';
-            status.className = 'status-message';
-        }, 4000);
-    };
-
-    window.init = function(isFromCloud = false) {
+    window.init = function() {
         const container = document.getElementById('weekPlan');
         if (!container) return;
 
@@ -752,7 +414,7 @@
         document.body.setAttribute('data-theme', theme);
         updateThemeButton(theme);
         document.getElementById('portionSelect').value = portionFactor;
-
+        
         container.innerHTML = '';
         tage.forEach(tag => {
             const data = saved[tag] || { title: "", img: "", cat: "", raw: null };
@@ -998,13 +660,14 @@
         const content = document.getElementById('listContent');
         content.innerHTML = '⏳ Liste wird erstellt...';
         document.getElementById('shoppingModal').style.display = 'flex';
-        let html = '';
-        for (let tag of tage) {
-            const m = mealStore[tag];
-            const titleInput = document.getElementById(`input-${tag}`);
+        
+        const dayResults = await Promise.all(tage.map(async (t) => {
+            const m = mealStore[t];
+            const titleInput = document.getElementById(`input-${t}`);
             const title = titleInput ? titleInput.value.trim() : "";
-            if (!title) continue;
+            if (!title) return '';
 
+            let html = `<div class="shop-day-header">${t}: ${title}</div><ul class="shopping-list">`;
             const ingredients = [];
             if (m) {
                 if (m.isCustom) {
@@ -1023,27 +686,29 @@
                 ...ingredients.map(i => (m && !m.isCustom) ? translateText(i, 'de') : Promise.resolve(i))
             ]);
 
-            html += `<div class="shop-day-header">${tag}</div><div class="shop-meal-name">${mealTitle}</div><ul class="shopping-list">`;
-            if (translatedItems.length > 0) {
-                html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
-            } else {
+            html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
+            if (translatedItems.filter(Boolean).length === 0 && ingredients.length > 0) {
+                 html += `<li style="list-style:none; color:var(--text-muted); font-size:0.85rem;">(Zutaten konnten nicht übersetzt werden)</li>`;
+            } else if (ingredients.length === 0) {
                 html += `<li style="list-style:none; color:var(--text-muted); font-size:0.85rem;">Keine Zutaten verfügbar</li>`;
             }
             html += `</ul>`;
-        }
-        content.innerHTML = html || 'Kein Plan vorhanden.';
+            return html;
+        }));
+        content.innerHTML = dayResults.join('') || 'Kein Plan vorhanden.';
     };
             
     window.shareWhatsApp = async function() {
         let text = "*Einkaufsliste* 🛒\n\n";
         let hasContent = false;
-        for (let tag of tage) {
-            const m = mealStore[tag];
-            const titleInput = document.getElementById(`input-${tag}`);
+        
+        const dayResults = await Promise.all(tage.map(async (t) => {
+            const m = mealStore[t];
+            const titleInput = document.getElementById(`input-${t}`);
             const title = titleInput ? titleInput.value.trim() : "";
-            if (!title) continue;
-            hasContent = true;
-            
+            if (!title) return '';
+
+            let dayText = `*${t}: ${title}*\n`;
             const ingredients = [];
             if (m) {
                 if (m.isCustom) {
@@ -1057,16 +722,14 @@
                 }
             }
 
-            const [mealTitle, ...translatedItems] = await Promise.all([
-                (m && !m.isCustom) ? translateText(title, 'de') : Promise.resolve(title), 
-                ...ingredients.map(i => (m && !m.isCustom) ? translateText(i, 'de') : Promise.resolve(i))
-            ]);
+            const translatedItems = await Promise.all(ingredients.map(i => (m && !m.isCustom) ? translateText(i, 'de') : Promise.resolve(i)));
+            translatedItems.filter(Boolean).forEach(i => dayText += `- ${i}\n`);
+            dayText += "\n";
+            return dayText;
+        }));
 
-            text += `*${tag}: ${mealTitle}*\n`;
-            translatedItems.filter(Boolean).forEach(i => text += `- ${i}\n`);
-            text += "\n";
-        }
-        if (!hasContent) return alert("Kein Plan vorhanden zum Teilen.");
+        text += dayResults.filter(Boolean).join('');
+        if (text === "*Einkaufsliste* 🛒\n\n") return alert("Kein Plan vorhanden zum Teilen.");
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     };
 
