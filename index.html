@@ -671,11 +671,11 @@
         return { scaled: line.replace(rawAmount, formatted), hadQuantity: true };
     }
 
-    function scaleIngredient(line) {
+    window.scaleIngredient = function(line) {
         if (portionFactor === 1) return line;
         const result = parseIngredientQuantity(line);
         return result.hadQuantity ? result.scaled : line;
-    }
+    };
 
     window.updatePortionFactor = function() {
         const select = document.getElementById('portionSelect');
@@ -686,7 +686,7 @@
             : `Portionen eingestellt auf ${portionFactor} Personen.`;
         window.showMessage(message, 'info');
         window.init();
-    }
+    };
 
     window.showMessage = function(text, type = 'info') {
         const status = document.getElementById('statusMessage');
@@ -697,13 +697,20 @@
             status.textContent = '';
             status.className = 'status-message';
         }, 4000);
-    }
+    };
 
     window.init = function(isFromCloud = false) {
         const container = document.getElementById('weekPlan');
-        const saved = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
-        const theme = localStorage.getItem(STORAGE_THEME) || 'light';
+        if (!container) return;
 
+        let saved = {};
+        try {
+            saved = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
+        } catch (e) {
+            console.error("Datenfehler im LocalStorage", e);
+        }
+
+        const theme = localStorage.getItem(STORAGE_THEME) || 'light';
         document.body.setAttribute('data-theme', theme);
         updateThemeButton(theme);
         document.getElementById('portionSelect').value = portionFactor;
@@ -746,62 +753,42 @@
                     </div>
                 </div>`;
         });
-    }
+    };
 
     function splitLongText(text, maxLength = 450) {
         const parts = [];
         let remaining = text.trim();
-
         while (remaining.length > 0) {
             if (remaining.length <= maxLength) {
                 parts.push(remaining);
                 break;
             }
-
             let splitIndex = remaining.lastIndexOf('. ', maxLength);
-            if (splitIndex === -1) {
-                splitIndex = remaining.lastIndexOf(' ', maxLength);
-            }
-            if (splitIndex === -1) {
-                splitIndex = maxLength;
-            }
-
+            if (splitIndex === -1) splitIndex = remaining.lastIndexOf(' ', maxLength);
+            if (splitIndex === -1) splitIndex = maxLength;
             parts.push(remaining.slice(0, splitIndex + (remaining[splitIndex] === ' ' ? 0 : 0)).trim());
             remaining = remaining.slice(splitIndex).trim();
         }
-
         return parts;
     }
 
     async function translateText(text, lang) {
         if (!text) return '';
-        
         const cacheKey = `${text}_${lang}`;
         if (translationCache[cacheKey]) return translationCache[cacheKey];
 
         const parts = splitLongText(text, 450);
         const translations = [];
-
         for (const part of parts) {
             try {
                 const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(part)}&langpair=en|${lang}`;
                 const res = await fetch(url);
-                if (!res.ok) {
-                    translations.push(await translateWithGoogle(part, lang));
-                    continue;
-                }
+                if (!res.ok) { translations.push(await translateWithGoogle(part, lang)); continue; }
                 const data = await res.json();
                 const translated = data.responseData?.translatedText;
-                if (translated && translated !== part) {
-                    translations.push(translated);
-                } else {
-                    translations.push(await translateWithGoogle(part, lang));
-                }
-            } catch (e) {
-                translations.push(await translateWithGoogle(part, lang));
-            }
+                translations.push(translated && translated !== part ? translated : await translateWithGoogle(part, lang));
+            } catch (e) { translations.push(await translateWithGoogle(part, lang)); }
         }
-
         const result = translations.join(' ');
         translationCache[cacheKey] = result;
         localStorage.setItem('translation_cache', JSON.stringify(translationCache));
@@ -815,26 +802,18 @@
             if (!res.ok) return text;
             const data = await res.json();
             return data[0].map(s => s[0]).join('') || text;
-        } catch (e) {
-            return text;
-        }
+        } catch (e) { return text; }
     }
 
     function getYoutubeVideoId(url) {
         if (!url) return null;
         try {
             const parsed = new URL(url);
-            if (parsed.hostname.includes('youtu.be')) {
-                return parsed.pathname.slice(1);
-            }
+            if (parsed.hostname.includes('youtu.be')) return parsed.pathname.slice(1);
             if (parsed.hostname.includes('youtube.com')) {
-                if (parsed.searchParams.has('v')) {
-                    return parsed.searchParams.get('v');
-                }
+                if (parsed.searchParams.has('v')) return parsed.searchParams.get('v');
                 const pathMatch = parsed.pathname.match(/embed\/([a-zA-Z0-9_-]+)/);
-                if (pathMatch) {
-                    return pathMatch[1];
-                }
+                if (pathMatch) return pathMatch[1];
             }
         } catch (e) {
             const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]+)/);
@@ -845,60 +824,47 @@
 
     function updateThemeButton(theme) {
         const btn = document.getElementById('themeBtn');
+        if (!btn) return;
         btn.textContent = theme === 'light' ? '🌙' : '☀️';
         btn.title = theme === 'light' ? 'Dunkles Theme' : 'Helles Theme';
     }
 
     window.openCustomEditor = function() {
         document.getElementById('customModal').style.display = 'flex';
-    }
+    };
 
     window.saveCustomRecipe = function() {
         const name = document.getElementById('customName').value.trim();
         const ingRaw = document.getElementById('customIng').value.split('\n').map(i => i.trim()).filter(Boolean);
         const ins = document.getElementById('customIns').value.trim();
-
-        if (!name || ingRaw.length === 0) {
-            return alert('Bitte Name und Zutaten angeben!');
-        }
-
+        if (!name || ingRaw.length === 0) return alert('Bitte Name und Zutaten angeben!');
         myRecipes.push({ strMeal: name, strInstructions: ins, isCustom: true, ingredients: ingRaw });
         localStorage.setItem(STORAGE_RECIPES, JSON.stringify(myRecipes));
-
         document.getElementById('customName').value = '';
         document.getElementById('customIng').value = '';
         document.getElementById('customIns').value = '';
         window.closeModal('customModal');
-    }
+    };
 
     window.fetchMeal = async function(tag) {
         const category = document.getElementById(`cat-${tag}`).value;
         let meal;
-
         try {
             if (category === 'MY') {
-                if (myRecipes.length === 0) {
-                    return alert('Keine eigenen Rezepte vorhanden.');
-                }
+                if (myRecipes.length === 0) return alert('Keine eigenen Rezepte vorhanden.');
                 meal = myRecipes[Math.floor(Math.random() * myRecipes.length)];
             } else {
                 const apiURL = category ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}` : 'https://www.themealdb.com/api/json/v1/1/random.php';
                 const res = await fetch(apiURL);
                 if (!res.ok) throw new Error('API-Anfrage fehlgeschlagen');
-
                 const data = await res.json();
-                if (!data.meals?.length) {
-                    return alert('Für diese Kategorie wurde kein Rezept gefunden.');
-                }
-
+                if (!data.meals?.length) return alert('Für diese Kategorie wurde kein Rezept gefunden.');
                 const tempMeal = data.meals[Math.floor(Math.random() * data.meals.length)];
                 const dRes = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${tempMeal.idMeal}`);
                 if (!dRes.ok) throw new Error('Detaildaten konnten nicht geladen werden');
                 const dData = await dRes.json();
                 meal = dData.meals?.[0];
-                if (!meal) {
-                    return alert('Das Rezept konnte nicht geladen werden.');
-                }
+                if (!meal) return alert('Das Rezept konnte nicht geladen werden.');
             }
 
             const nameDE = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
@@ -907,219 +873,160 @@
             document.getElementById(`img-${tag}`).src = imgSrc;
             document.getElementById(`img-${tag}`).style.display = 'block';
             document.getElementById(`btn-${tag}`).style.display = 'block';
-
             mealStore[tag] = meal;
             window.save();
         } catch (error) {
             console.error(error);
             alert('Fehler beim Laden des Rezepts. Bitte versuche es erneut.');
         }
-    }
+    };
 
     window.openRecipe = async function(tag) {
         const meal = mealStore[tag];
         if (!meal) return;
-
         const title = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
         document.getElementById('modalTitle').innerText = title;
         document.getElementById('recipeModal').style.display = 'flex';
-
         const tabBtnEN = document.getElementById('tabBtnEN');
         const tabBtnVideo = document.getElementById('tabBtnVideo');
-
         let ingsEN = [];
         if (meal.isCustom) {
-            ingsEN = meal.ingredients;
-            tabBtnEN.style.display = 'none';
-            tabBtnVideo.style.display = 'none';
+            ingsEN = meal.ingredients; tabBtnEN.style.display = 'none'; tabBtnVideo.style.display = 'none';
         } else {
             tabBtnEN.style.display = 'block';
             for (let i = 1; i <= 20; i++) {
                 const ingredient = meal[`strIngredient${i}`];
-                if (ingredient) {
-                    ingsEN.push(`${meal[`strMeasure${i}`] || ''} ${ingredient}`.trim());
-                }
+                if (ingredient) ingsEN.push(`${meal[`strMeasure${i}`] || ''} ${ingredient}`.trim());
             }
         }
-
-        const displayedIngredients = ingsEN.map(line => scaleIngredient(line));
+        const displayedIngredients = ingsEN.map(line => window.scaleIngredient(line));
         document.getElementById('ingEN').innerHTML = displayedIngredients.map(i => `<div>${i}</div>`).join('');
         document.getElementById('insEN').innerText = meal.strInstructions || '';
-
         const translatedIngredients = meal.isCustom
-            ? displayedIngredients
-            : await Promise.all(displayedIngredients.map(i => translateText(i, 'de')));
+            ? displayedIngredients : await Promise.all(displayedIngredients.map(i => translateText(i, 'de')));
         document.getElementById('ingDE').innerHTML = translatedIngredients.map(i => `<div style="background:var(--bg);padding:8px;border-radius:10px;">${i}</div>`).join('');
         document.getElementById('insDE').innerText = meal.isCustom ? meal.strInstructions : await translateText(meal.strInstructions, 'de');
-
         const vId = !meal.isCustom && meal.strYoutube ? getYoutubeVideoId(meal.strYoutube) : null;
-        const videoBox = document.getElementById('videoBox');
-        const videoFallback = document.getElementById('videoFallback');
-
+        const videoBox = document.getElementById('videoBox'); const videoFallback = document.getElementById('videoFallback');
         if (vId) {
             tabBtnVideo.style.display = 'block';
-            const youtubeUrl = `https://www.youtube.com/watch?v=${vId}`;
-            const embedUrl = `https://www.youtube-nocookie.com/embed/${vId}?rel=0&modestbranding=1&showinfo=0`;
+            const youtubeUrl = `https://www.youtube.com/watch?v=${vId}`; const embedUrl = `https://www.youtube-nocookie.com/embed/${vId}?rel=0&modestbranding=1&showinfo=0`;
             videoBox.innerHTML = `<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="${embedUrl}" allowfullscreen></iframe>`;
             videoFallback.innerHTML = `<a href="${youtubeUrl}" target="_blank" style="color:var(--accent);">▶️ Auf YouTube ansehen</a>`;
-        } else {
-            tabBtnVideo.style.display = 'none';
-            videoBox.innerHTML = '';
-            videoFallback.innerHTML = '';
-        }
+        } else { tabBtnVideo.style.display = 'none'; videoBox.innerHTML = ''; videoFallback.innerHTML = ''; }
         window.showTab('DE');
-    }
+    };
 
     window.generateShoppingList = async function() {
         const content = document.getElementById('listContent');
         content.innerHTML = '⏳ Liste wird erstellt...';
         document.getElementById('shoppingModal').style.display = 'flex';
-
         let html = '';
         for (let tag of tage) {
             const m = mealStore[tag];
             if (!m || !m.strMeal) continue;
             const ingredients = [];
             if (m.isCustom) {
-                ingredients.push(...m.ingredients.map(line => scaleIngredient(line)));
+                ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
             } else {
                 for (let i = 1; i <= 20; i++) {
                     const ingredient = m[`strIngredient${i}`]?.trim();
                     const measure = m[`strMeasure${i}`]?.trim() || '';
-                    if (ingredient) ingredients.push(scaleIngredient(`${measure} ${ingredient}`.trim()));
+                    if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
                 }
             }
-
-            // Parallelisierte Übersetzung für massive Geschwindigkeitsvorteile (korrigiert)
             const [mealTitle, ...translatedItems] = await Promise.all([
-                m.isCustom ? m.strMeal : translateText(m.strMeal, 'de'),
-                ...ingredients.map(i => m.isCustom ? i : translateText(i, 'de'))
+                m.isCustom ? m.strMeal : translateText(m.strMeal, 'de'), ...ingredients.map(i => m.isCustom ? i : translateText(i, 'de'))
             ]);
-
             html += `<div class="shop-day-header">${tag}</div><div class="shop-meal-name">${mealTitle}</div><ul class="shopping-list">`;
             html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
             html += `</ul>`;
         }
-
         content.innerHTML = html || 'Kein Plan vorhanden.';
-    }
+    };
 
     window.printShoppingList = async function() {
-        const modal = document.getElementById('shoppingModal');
-        if (modal.style.display !== 'flex') {
-            await generateShoppingList();
-        }
-        window.print();
-    }
+        const modal = document.getElementById('shoppingModal'); if (modal.style.display !== 'flex') await generateShoppingList(); window.print();
+    };
 
     window.showTab = function(lang) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('content' + lang).classList.add('active');
-        document.getElementById('tabBtn' + lang).classList.add('active');
-    }
+        const content = document.getElementById('content' + lang); if (content) content.classList.add('active');
+        const btn = document.getElementById('tabBtn' + lang); if (btn) btn.classList.add('active');
+    };
 
     window.save = async function() {
         const data = {};
         tage.forEach(t => {
-            data[t] = {
-                title: document.getElementById(`input-${t}`).value,
-                img: document.getElementById(`img-${t}`).src,
-                cat: document.getElementById(`cat-${t}`).value,
-                raw: mealStore[t] || null,
-            };
+            const input = document.getElementById(`input-${t}`); const img = document.getElementById(`img-${t}`); const cat = document.getElementById(`cat-${t}`);
+            data[t] = { title: input ? input.value : "", img: img ? img.src : "", cat: cat ? cat.value : "", raw: mealStore[t] || null };
         });
         localStorage.setItem(STORAGE_PLAN, JSON.stringify(data));
-
-        // In Cloud speichern, wenn Haushalt aktiv
         if (householdId && typeof isRemoteUpdate !== 'undefined' && !isRemoteUpdate) {
-            try {
-                await setDoc(doc(db, "plans", householdId), data);
-            } catch (e) { console.error("Cloud Save Error", e); }
+            try { await setDoc(doc(db, "plans", householdId), data); } catch (e) { console.error("Cloud Save Error", e); }
         }
-    }
+    };
 
     window.toggleTheme = function() {
         const current = document.body.getAttribute('data-theme') || 'light';
-        const next = current === 'light' ? 'dark' : 'light';
-        document.body.setAttribute('data-theme', next);
-        localStorage.setItem(STORAGE_THEME, next);
+        const next = current === 'light' ? 'dark' : 'light'; document.body.setAttribute('data-theme', next); localStorage.setItem(STORAGE_THEME, next);
         updateThemeButton(next);
-    }
+    };
 
     window.closeModal = function(id) {
-        document.getElementById(id).style.display = 'none';
-    }
+        const modal = document.getElementById(id); if (modal) modal.style.display = 'none';
+    };
 
     window.closeRecipe = function() {
-        window.closeModal('recipeModal');
-        document.getElementById('videoBox').innerHTML = '';
-    }
+        window.closeModal('recipeModal'); const vb = document.getElementById('videoBox'); if (vb) vb.innerHTML = '';
+    };
 
     window.toggleFavorite = function() { window.showMessage("Favoriten kommen bald!", "info"); };
 
     window.resetPlan = async function() {
         if (confirm('Plan zurücksetzen?')) {
-            localStorage.removeItem(STORAGE_PLAN);
-            mealStore = {};
-            window.init();
-            window.showMessage('Plan wurde zurückgesetzt.', 'info');
+            localStorage.removeItem(STORAGE_PLAN); mealStore = {}; window.init(); window.showMessage('Plan wurde zurückgesetzt.', 'info');
         }
-    }
+    };
 
-    // --- Cloud Sync Funktionen ---
     window.openSyncModal = function() {
-        document.getElementById('householdIdInput').value = householdId || '';
-        document.getElementById('householdInfo').textContent = householdId ? `Aktueller Haushalt: ${householdId}` : 'Noch kein Haushalt verknüpft.';
-        document.getElementById('syncModal').style.display = 'flex';
-    }
+        const input = document.getElementById('householdIdInput'); if (input) input.value = householdId || '';
+        const info = document.getElementById('householdInfo'); if (info) info.textContent = householdId ? `Aktueller Haushalt: ${householdId}` : 'Noch kein Haushalt verknüpft.';
+        const modal = document.getElementById('syncModal'); if (modal) modal.style.display = 'flex';
+    };
 
     window.joinHousehold = async function() {
-        const id = document.getElementById('householdIdInput').value.trim().toLowerCase().replace(/[^a-z0-1-]/g, '');
-        if (id.length < 3) {
-            return alert("ID zu kurz!");
-        }
-        
-        localStorage.setItem(STORAGE_HOUSEHOLD, id);
-        window.showMessage("Haushalt beigetreten. Lade Daten...", "success");
-        location.reload();
-    }
+        const input = document.getElementById('householdIdInput');
+        const id = input ? input.value.trim().toLowerCase().replace(/[^a-z0-1-]/g, '') : "";
+        if (id.length < 3) return alert("ID zu kurz!");
+        localStorage.setItem(STORAGE_HOUSEHOLD, id); window.showMessage("Haushalt beigetreten. Lade Daten...", "success"); location.reload();
+    };
 
     window.leaveHousehold = function() {
         localStorage.removeItem(STORAGE_HOUSEHOLD);
         location.reload();
-    }
+    };
 
-    // Cloud Listener Initialisierung
     if (householdId) {
-        document.getElementById('syncStatus').style.display = 'block';
+        const status = document.getElementById('syncStatus'); if (status) status.style.display = 'block';
         const planRef = doc(db, "plans", householdId);
-
-        // Echtzeit-Überwachung der Datenbank
         onSnapshot(planRef, (docSnap) => {
             if (docSnap.exists()) {
                 const remoteData = docSnap.data();
                 const localData = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
-
-                // Nur updaten, wenn sich die Daten wirklich unterscheiden
                 if (JSON.stringify(remoteData) !== JSON.stringify(localData)) {
-                    isRemoteUpdate = true;
-                    localStorage.setItem(STORAGE_PLAN, JSON.stringify(remoteData));
-                    window.init(true);
-                    isRemoteUpdate = false;
+                    isRemoteUpdate = true; localStorage.setItem(STORAGE_PLAN, JSON.stringify(remoteData)); window.init(true); isRemoteUpdate = false;
                 }
             }
         });
     }
 
     window.addEventListener('click', event => {
-        const modal = event.target.closest('.modal');
-        if (modal && event.target === modal) {
-            window.closeModal(modal.id);
-        }
+        const modal = event.target.closest('.modal'); if (modal && event.target === modal) window.closeModal(modal.id);
     });
 
-    window.init(); // Muss window.init() sein, da es ein Modul ist
+    window.init();
 </script>
 </body>
 </html>
