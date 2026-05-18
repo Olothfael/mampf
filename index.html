@@ -547,17 +547,7 @@
     <div class="modal-content">
         <span onclick="closeModal('shoppingModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
         <h2 style="text-align: center; margin-bottom: 20px;">Einkaufsliste</h2>
-        <div style="text-align:center;margin-bottom:16px;"><button class="btn-action small" onclick="printShoppingList()">🖨️ Drucken</button></div>
-        <div id="listContent"></div>
-    </div>
-</div>
-
-<div id="recipeModal" class="modal">
-    <div class="modal-content">
-        <span onclick="closeRecipe()" class="modal-close">×</span>
-        <div class="modal-header">
-            <h2 id="modalTitle">Rezept</h2>
-            <button id="favoriteBtn" class="btn-action small favorite-toggle" onclick="toggleFavorite()">★ Favorit</button>
+        <div style="text-align:center;margin-bottom:16px;">l favorite-toggle" onclick="toggleFavorite()">★ Favorit</button>
         </div>
         <div class="tab-nav">
             <button id="tabBtnDE" class="tab-btn active" onclick="showTab('DE')">
@@ -589,6 +579,8 @@
         <input type="text" id="customName" class="full" placeholder="Name">
         <textarea id="customIng" rows="5" placeholder="Zutaten (eine pro Zeile)"></textarea>
         <textarea id="customIns" rows="5" placeholder="Zubereitung..."></textarea>
+        <label style="display:block; margin-bottom:8px; font-weight:700; font-size:0.9rem;">Foto (optional, max. 500KB):</label>
+        <input type="file" id="customImgInput" class="full" accept="image/*" style="margin-bottom:10px;">
         <button class="btn-action" style="background:var(--accent); color:white;" onclick="saveCustomRecipe()">💾 Speichern</button>
     </div>
 </div>
@@ -833,16 +825,31 @@
         document.getElementById('customModal').style.display = 'flex';
     };
 
-    window.saveCustomRecipe = function() {
+    window.saveCustomRecipe = async function() {
         const name = document.getElementById('customName').value.trim();
         const ingRaw = document.getElementById('customIng').value.split('\n').map(i => i.trim()).filter(Boolean);
         const ins = document.getElementById('customIns').value.trim();
+        const imgInput = document.getElementById('customImgInput');
+
         if (!name || ingRaw.length === 0) return alert('Bitte Name und Zutaten angeben!');
-        myRecipes.push({ strMeal: name, strInstructions: ins, isCustom: true, ingredients: ingRaw });
+
+        let imgBase64 = null;
+        if (imgInput.files && imgInput.files[0]) {
+            const file = imgInput.files[0];
+            if (file.size > 500000) return alert('Das Bild ist zu groß (max. 500KB erlaubt).');
+            imgBase64 = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        myRecipes.push({ strMeal: name, strInstructions: ins, isCustom: true, ingredients: ingRaw, img: imgBase64 });
         localStorage.setItem(STORAGE_RECIPES, JSON.stringify(myRecipes));
         document.getElementById('customName').value = '';
         document.getElementById('customIng').value = '';
         document.getElementById('customIns').value = '';
+        imgInput.value = '';
         window.closeModal('customModal');
     };
 
@@ -868,7 +875,7 @@
             }
 
             const nameDE = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
-            const imgSrc = meal.isCustom ? 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=200' : meal.strMealThumb;
+            const imgSrc = meal.isCustom ? (meal.img || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=200') : meal.strMealThumb;
             document.getElementById(`input-${tag}`).value = nameDE;
             document.getElementById(`img-${tag}`).src = imgSrc;
             document.getElementById(`img-${tag}`).style.display = 'block';
@@ -947,6 +954,43 @@
 
     window.printShoppingList = async function() {
         const modal = document.getElementById('shoppingModal'); if (modal.style.display !== 'flex') await generateShoppingList(); window.print();
+    };
+
+    window.shareWhatsApp = async function() {
+        let text = "*Einkaufsliste* 🛒\n\n";
+        let hasContent = false;
+        
+        for (let tag of tage) {
+            const m = mealStore[tag];
+            if (!m || !m.strMeal) continue;
+            hasContent = true;
+            
+            const ingredients = [];
+            if (m.isCustom) {
+                ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
+            } else {
+                for (let i = 1; i <= 20; i++) {
+                    const ingredient = m[`strIngredient${i}`]?.trim();
+                    const measure = m[`strMeasure${i}`]?.trim() || '';
+                    if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
+                }
+            }
+
+            const [mealTitle, ...translatedItems] = await Promise.all([
+                m.isCustom ? m.strMeal : translateText(m.strMeal, 'de'), 
+                ...ingredients.map(i => m.isCustom ? i : translateText(i, 'de'))
+            ]);
+
+            text += `*${tag}: ${mealTitle}*\n`;
+            translatedItems.filter(Boolean).forEach(i => text += `- ${i}\n`);
+            text += "\n";
+        }
+
+        if (!hasContent) {
+            return alert("Kein Plan vorhanden zum Teilen.");
+        }
+
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     };
 
     window.showTab = function(lang) {
