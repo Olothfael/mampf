@@ -615,7 +615,7 @@
             if (m) {
                 let ings = m.isCustom ? m.ingredients : [];
                 if (!m.isCustom) { for (let i = 1; i <= 20; i++) if (m[`strIngredient${i}`]) ings.push(`${m[`strMeasure${i}`] || ''} ${m[`strIngredient${i}`]}`); }
-                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i.trim()), 'de')));
+                const trans = await Promise(ings.map(i => translateText(window.scaleIngredient(i.trim()), 'de')));
                 trans.forEach(it => dayText += `- ${it}\n`);
             }
             return dayText + "\n";
