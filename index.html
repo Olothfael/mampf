@@ -447,6 +447,22 @@
         if (m) m.style.display = 'none';
     };
 
+    window.openSyncModal = function() {
+        const input = document.getElementById('householdIdInput');
+        if (input) input.value = householdId || '';
+        const info = document.getElementById('householdInfo');
+        if (info) {
+            info.textContent = householdId 
+                ? `Aktueller Haushalt: ${householdId}` 
+                : 'Noch kein Haushalt verknüpft.';
+        }
+        document.getElementById('syncModal').style.display = 'flex';
+    };
+
+    window.openCustomEditor = function() {
+        document.getElementById('customModal').style.display = 'flex';
+    };
+
     window.closeRecipe = () => {
         window.closeModal('recipeModal');
         const vb = document.getElementById('videoBox');
@@ -495,8 +511,15 @@
                             <option value="MY" ${data.cat === 'MY' ? 'selected' : ''}>👤 Eigene</option>
                             <option value="Vegetarian" ${data.cat === 'Vegetarian' ? 'selected' : ''}>🥗 Veggie</option>
                             <option value="Pasta" ${data.cat === 'Pasta' ? 'selected' : ''}>🍝 Pasta</option>
+                            <option value="Seafood" ${data.cat === 'Seafood' ? 'selected' : ''}>🐟 Fisch</option>
                             <option value="Chicken" ${data.cat === 'Chicken' ? 'selected' : ''}>🍗 Huhn</option>
                             <option value="Beef" ${data.cat === 'Beef' ? 'selected' : ''}>🥩 Rind</option>
+                            <option value="Pork" ${data.cat === 'Pork' ? 'selected' : ''}>🍖 Schwein</option>
+                            <option value="Lamb" ${data.cat === 'Lamb' ? 'selected' : ''}>🐑 Lamm</option>
+                            <option value="Side" ${data.cat === 'Side' ? 'selected' : ''}>🍟 Beilagen</option>
+                            <option value="Starter" ${data.cat === 'Starter' ? 'selected' : ''}>🍲 Vorspeise</option>
+                            <option value="Dessert" ${data.cat === 'Dessert' ? 'selected' : ''}>🍰 Dessert</option>
+                            <option value="Breakfast" ${data.cat === 'Breakfast' ? 'selected' : ''}>☕ Frühstück</option>
                         </select>
                     </div>
                     <div class="card-body">
