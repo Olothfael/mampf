@@ -433,7 +433,7 @@
         const cacheKey = `${text}_${lang}`;
         if (translationCache[cacheKey]) return translationCache[cacheKey];
         try {
-            const res = await fetch(`<https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}>`);
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`);
             const data = await res.json();
             const result = data[0].map(s => s[0]).join('');
             translationCache[cacheKey] = result;
@@ -538,10 +538,10 @@
                 if (myRecipes.length === 0) return alert("Keine eigenen Rezepte!");
                 meal = myRecipes[Math.floor(Math.random() * myRecipes.length)];
             } else {
-                const res = await fetch(catVal ? `<https://www.themealdb.com/api/json/v1/1/filter.php?c=${catVal}>` : 'https://www.themealdb.com/api/json/v1/1/random.php');
+                const res = await fetch(catVal ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${catVal}` : 'https://www.themealdb.com/api/json/v1/1/random.php');
                 const data = await res.json();
                 const temp = data.meals[Math.floor(Math.random() * data.meals.length)];
-                const dRes = await fetch(`<https://www.themealdb.com/api/json/v1/1/lookup.php?i=${temp.idMeal}>`);
+                const dRes = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${temp.idMeal}`);
                 const dData = await dRes.json();
                 meal = dData.meals[0];
             }
@@ -615,13 +615,13 @@
             if (m) {
                 let ings = m.isCustom ? m.ingredients : [];
                 if (!m.isCustom) { for (let i = 1; i <= 20; i++) if (m[`strIngredient${i}`]) ings.push(`${m[`strMeasure${i}`] || ''} ${m[`strIngredient${i}`]}`); }
-                const trans = await Promise(ings.map(i => translateText(window.scaleIngredient(i.trim()), 'de')));
+                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i.trim()), 'de')));
                 trans.forEach(it => dayText += `- ${it}\n`);
             }
             return dayText + "\n";
         }));
         text += results.join('');
-        window.open(`<https://wa.me/?text=${encodeURIComponent(text)}>`);
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
     };
 
     window.saveCustomRecipe = async function() {
