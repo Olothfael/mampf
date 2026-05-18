@@ -121,7 +121,7 @@
             background: var(--bg);
             border: 1px solid var(--border);
         }
-        .meal-img.placeholder { border: none; }
+        .meal-img.placeholder { border: none; } /* Gestrichelter Rahmen entfernt */
 
         .meal-info { flex-grow: 1; min-width: 0; }
         .meal-input {
@@ -278,8 +278,18 @@
         <span onclick="window.closeRecipe()" class="modal-close">×</span>
         <h2 id="modalTitle">Rezept</h2>
         <div class="tab-nav">
-            <button id="tabBtnDE" class="tab-btn active" onclick="window.showTab('DE')">Deutsch</button>
-            <button id="tabBtnEN" class="tab-btn" onclick="window.showTab('EN')">English</button>
+            <button id="tabBtnDE" class="tab-btn active" onclick="window.showTab('DE')">
+                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:24px;height:16px;vertical-align:middle;margin-right:5px;"><rect width="36" height="24" fill="#000"/><rect y="8" width="36" height="8" fill="#D00"/><rect y="16" width="36" height="8" fill="#FFCE00"/></svg>
+                Deutsch
+            </button>
+            <button id="tabBtnEN" class="tab-btn" onclick="window.showTab('EN')">
+                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:24px;height:16px;vertical-align:middle;margin-right:5px;"><rect width="36" height="24" fill="#012169"/><path d="M0 0l36 24M36 0L0 24" stroke="#fff" stroke-width="4"/><path d="M0 0l36 24M36 0L0 24" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#fff" stroke-width="4"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/></svg>
+                English
+            </button>
+            <button id="tabBtnVideo" class="tab-btn" onclick="window.showTab('Video')">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:24px;height:16px;vertical-align:middle;margin-right:5px;"><rect width="24" height="24" rx="4" fill="#FF0000"/><path d="M9.5 8.5L15.5 12L9.5 15.5V8.5Z" fill="#fff"/></svg>
+                YouTube
+            </button>
         </div>
         <div id="contentDE" class="tab-content active">
             <div id="ingDE" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
@@ -288,6 +298,10 @@
         <div id="contentEN" class="tab-content">
             <div id="ingEN" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;"></div>
             <div id="insEN" style="white-space: pre-line;"></div>
+        </div>
+        <div id="contentVideo" class="tab-content">
+            <div id="videoBox" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:15px; background:#000;"></div>
+            <div id="videoFallback" style="margin-top:12px; text-align:center; color:var(--text);"></div>
         </div>
     </div>
 </div>
@@ -528,11 +542,60 @@
         btn.textContent = theme === 'light' ? '🌙' : '☀️';
         btn.title = theme === 'light' ? 'Dunkles Theme' : 'Helles Theme';
     }
-    // Make updateThemeButton globally accessible
-    window.updateThemeButton = updateThemeButton;
 
-    // Override the default toggleTheme to not reload the page
-    window.toggleTheme = function() {
+    async function translateText(text, lang) {
+        if (!text) return '';
+        const cacheKey = `${text}_${lang}`;
+        if (translationCache[cacheKey]) return translationCache[cacheKey];
+
+        const parts = splitLongText(text, 450);
+        const translations = [];
+        for (const part of parts) {
+            try {
+                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(part)}&langpair=en|${lang}`;
+                const res = await fetch(url);
+                if (!res.ok) { translations.push(await translateWithGoogle(part, lang)); continue; } // Fallback to Google
+                const data = await res.json();
+                const translated = data.responseData?.translatedText;
+                translations.push(translated && translated !== part ? translated : await translateWithGoogle(part, lang)); // Fallback if MyMemory returns same text
+            } catch (e) { translations.push(await translateWithGoogle(part, lang)); } // Fallback on fetch error
+        }
+        const result = translations.join(' ');
+        translationCache[cacheKey] = result;
+        localStorage.setItem('translation_cache', JSON.stringify(translationCache));
+        return result;
+    }
+
+    async function translateWithGoogle(text, lang) {
+        try {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`;
+            const res = await fetch(url);
+            if (!res.ok) return text;
+            const data = await res.json();
+            return data[0].map(s => s[0]).join('') || text;
+        } catch (e) { return text; }
+    }
+
+    function getYoutubeVideoId(url) {
+        if (!url) return null;
+        try {
+            const parsed = new URL(url);
+            if (parsed.hostname.includes('youtu.be')) return parsed.pathname.slice(1);
+            if (parsed.hostname.includes('youtube.com')) {
+                if (parsed.searchParams.has('v')) return parsed.searchParams.get('v');
+                const pathMatch = parsed.pathname.match(/embed\/([a-zA-Z0-9_-]+)/);
+                if (pathMatch) return pathMatch[1];
+            }
+        } catch (e) {
+            const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]+)/);
+            return match ? match[1] : null;
+        }
+        return null;
+    }
+
+    window.updateThemeButton = updateThemeButton; // Make updateThemeButton globally accessible
+
+    window.toggleTheme = function() { // Override the default toggleTheme to not reload the page
         const current = document.body.getAttribute('data-theme') || 'light';
         const next = current === 'light' ? 'dark' : 'light';
         document.body.setAttribute('data-theme', next);
@@ -566,6 +629,42 @@
         document.getElementById('customIns').value = '';
         if(imgInput) imgInput.value = '';
         window.closeModal('customModal');
+    };
+
+    window.openRecipe = async function(tag) {
+        const meal = mealStore[tag];
+        if (!meal) return;
+        const title = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('recipeModal').style.display = 'flex';
+        const tabBtnEN = document.getElementById('tabBtnEN');
+        const tabBtnVideo = document.getElementById('tabBtnVideo');
+        let ingsEN = [];
+        if (meal.isCustom) {
+            ingsEN = meal.ingredients; tabBtnEN.style.display = 'none'; tabBtnVideo.style.display = 'none';
+        } else {
+            tabBtnEN.style.display = 'block';
+            for (let i = 1; i <= 20; i++) {
+                const ingredient = meal[`strIngredient${i}`];
+                if (ingredient) ingsEN.push(`${meal[`strMeasure${i}`] || ''} ${ingredient}`.trim());
+            }
+        }
+        const displayedIngredients = ingsEN.map(line => window.scaleIngredient(line));
+        document.getElementById('ingEN').innerHTML = displayedIngredients.map(i => `<div>${i}</div>`).join('');
+        document.getElementById('insEN').innerText = meal.strInstructions || '';
+        const translatedIngredients = meal.isCustom
+            ? displayedIngredients : await Promise.all(displayedIngredients.map(i => translateText(i, 'de')));
+        document.getElementById('ingDE').innerHTML = translatedIngredients.map(i => `<div style="background:var(--bg);padding:8px;border-radius:10px;">${i}</div>`).join('');
+        document.getElementById('insDE').innerText = meal.isCustom ? meal.strInstructions : await translateText(meal.strInstructions, 'de');
+        const vId = !meal.isCustom && meal.strYoutube ? getYoutubeVideoId(meal.strYoutube) : null;
+        const videoBox = document.getElementById('videoBox'); const videoFallback = document.getElementById('videoFallback');
+        if (vId) {
+            tabBtnVideo.style.display = 'block';
+            const youtubeUrl = `https://www.youtube.com/watch?v=${vId}`; const embedUrl = `https://www.youtube-nocookie.com/embed/${vId}?rel=0&modestbranding=1&showinfo=0`;
+            videoBox.innerHTML = `<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="${embedUrl}" allowfullscreen></iframe>`;
+            videoFallback.innerHTML = `<a href="${youtubeUrl}" target="_blank" style="color:var(--accent);">▶️ Auf YouTube ansehen</a>`;
+        } else { tabBtnVideo.style.display = 'none'; videoBox.innerHTML = ''; videoFallback.innerHTML = ''; }
+        window.showTab('DE');
     };
 
     window.save = async function() {
