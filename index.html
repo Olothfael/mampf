@@ -538,17 +538,18 @@
 
         <div id="weekPlan"></div>
 
-        <button class="btn-action" onclick="generateShoppingList()">🛒 Einkaufsliste nach Tagen</button>
-        <button class="btn-action ghost" onclick="openSyncModal()">👥 Gemeinsam nutzen / Account</button>
-        <button class="btn-action" onclick="openCustomEditor()">📝 Eigenes Rezept erstellen</button>
-        <button class="btn-action ghost" onclick="resetPlan()">✨ Plan zurücksetzen</button>
+        <button class="btn-action" onclick="window.generateShoppingList()">🛒 Einkaufsliste nach Tagen</button>
+        <button class="btn-action ghost" onclick="window.openSyncModal()">👥 Gemeinsam nutzen / Account</button>
+        <button class="btn-action" onclick="window.openCustomEditor()">📝 Eigenes Rezept erstellen</button>
+        <button class="btn-action ghost" onclick="window.resetPlan()">✨ Plan zurücksetzen</button>
     </div>
+
 <div id="shoppingModal" class="modal">
     <div class="modal-content">
-        <span onclick="closeModal('shoppingModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
+        <span onclick="window.closeModal('shoppingModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
         <h2 style="text-align: center; margin-bottom: 20px;">Einkaufsliste</h2>
         <div style="text-align:center;margin-bottom:16px;">
-            <button class="btn-action small" onclick="printShoppingList()">🖨️ Drucken</button>
+            <button class="btn-action small" onclick="window.printShoppingList()">🖨️ Drucken</button>
             <button class="btn-action small" style="background:#25D366; color:white; margin-left:8px;" onclick="window.shareWhatsApp()">📱 WhatsApp</button>
         </div>
         <div id="listContent"></div>
@@ -557,24 +558,15 @@
 
 <div id="recipeModal" class="modal">
     <div class="modal-content">
-        <span onclick="closeRecipe()" class="modal-close">×</span>
+        <span onclick="window.closeRecipe()" class="modal-close">×</span>
         <div class="modal-header">
             <h2 id="modalTitle">Rezept</h2>
-            <button id="favoriteBtn" class="btn-action small favorite-toggle" onclick="toggleFavorite()">★ Favorit</button>
+            <button id="favoriteBtn" class="btn-action small favorite-toggle" onclick="window.toggleFavorite()">★ Favorit</button>
         </div>
         <div class="tab-nav">
-            <button id="tabBtnDE" class="tab-btn active" onclick="showTab('DE')">
-                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="36" height="24" fill="#000"/><rect y="8" width="36" height="8" fill="#D00"/><rect y="16" width="36" height="8" fill="#FFCE00"/></svg>
-                Deutsch
-            </button>
-            <button id="tabBtnEN" class="tab-btn" onclick="showTab('EN')">
-                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="36" height="24" fill="#012169"/><path d="M0 0l36 24M36 0L0 24" stroke="#fff" stroke-width="4"/><path d="M0 0l36 24M36 0L0 24" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#fff" stroke-width="4"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/></svg>
-                English
-            </button>
-            <button id="tabBtnVideo" class="tab-btn" onclick="showTab('Video')">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#FF0000"/><path d="M9.5 8.5L15.5 12L9.5 15.5V8.5Z" fill="#fff"/></svg>
-                YouTube
-            </button>
+            <button id="tabBtnDE" class="tab-btn active" onclick="window.showTab('DE')">Deutsch</button>
+            <button id="tabBtnEN" class="tab-btn" onclick="window.showTab('EN')">English</button>
+            <button id="tabBtnVideo" class="tab-btn" onclick="window.showTab('Video')">YouTube</button>
         </div>
         <div id="contentDE" class="tab-content active"><div id="ingDE" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px;"></div><div id="insDE" style="white-space: pre-line; line-height: 1.6;"></div></div>
         <div id="contentEN" class="tab-content"><div id="ingEN" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:15px;"></div><div id="insEN" style="white-space: pre-line; line-height: 1.6;"></div></div>
@@ -587,26 +579,26 @@
 
 <div id="customModal" class="modal">
     <div class="modal-content">
-        <span onclick="closeModal('customModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
+        <span onclick="window.closeModal('customModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
         <h2 style="text-align: center; color: var(--primary);">Neues Rezept</h2>
         <input type="text" id="customName" class="full" placeholder="Name">
         <textarea id="customIng" rows="5" placeholder="Zutaten (eine pro Zeile)"></textarea>
         <textarea id="customIns" rows="5" placeholder="Zubereitung..."></textarea>
-        <label style="display:block; margin-bottom:8px; font-weight:700; font-size:0.9rem;">Foto (optional, max. 500KB):</label>
+        <label style="display:block; margin-bottom:8px; font-weight:700; font-size:0.9rem;">Foto (optional):</label>
         <input type="file" id="customImgInput" class="full" accept="image/*" style="margin-bottom:10px;">
-        <button class="btn-action" style="background:var(--accent); color:white;" onclick="saveCustomRecipe()">💾 Speichern</button>
+        <button class="btn-action" style="background:var(--accent); color:white;" onclick="window.saveCustomRecipe()">💾 Speichern</button>
     </div>
 </div>
 
 <div id="syncModal" class="modal">
     <div class="modal-content">
-        <span onclick="closeModal('syncModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
+        <span onclick="window.closeModal('syncModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
         <h2 style="text-align: center; color: var(--primary);">Gemeinsam planen</h2>
         <p style="font-size: 0.9rem; color: var(--text-muted); text-align:center;">Gib eine Haushalts-ID ein, um den Plan mit anderen zu teilen.</p>
         <input type="text" id="householdIdInput" class="full" placeholder="z.B. familie-mustermann">
-        <button class="btn-action" onclick="joinHousehold()">🆔 Haushalt beitreten / Erstellen</button>
+        <button class="btn-action" onclick="window.joinHousehold()">🆔 Haushalt beitreten / Erstellen</button>
         <p id="householdInfo" style="font-size: 0.8rem; margin-top: 15px; text-align: center;"></p>
-        <button class="btn-action ghost" onclick="leaveHousehold()">Alleine nutzen (Lokal)</button>
+        <button class="btn-action ghost" onclick="window.leaveHousehold()">Alleine nutzen (Lokal)</button>
     </div>
 </div>
 
@@ -627,7 +619,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Helferfunktion zum Verkleinern von Bildern
     async function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -881,12 +872,13 @@
         document.getElementById('customName').value = '';
         document.getElementById('customIng').value = '';
         document.getElementById('customIns').value = '';
-        imgInput.value = '';
+        if(imgInput) imgInput.value = '';
         window.closeModal('customModal');
     };
 
     window.fetchMeal = async function(tag) {
-        const category = document.getElementById(`cat-${tag}`).value;
+        const catSelect = document.getElementById(`cat-${tag}`);
+        const category = catSelect ? catSelect.value : "";
         let meal;
         try {
             if (category === 'MY') {
@@ -963,65 +955,72 @@
         let html = '';
         for (let tag of tage) {
             const m = mealStore[tag];
-            if (!m || !m.strMeal) continue;
+            const titleInput = document.getElementById(`input-${tag}`);
+            const title = titleInput ? titleInput.value.trim() : "";
+            if (!title) continue;
+
             const ingredients = [];
-            if (m.isCustom) {
-                ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
-            } else {
-                for (let i = 1; i <= 20; i++) {
-                    const ingredient = m[`strIngredient${i}`]?.trim();
-                    const measure = m[`strMeasure${i}`]?.trim() || '';
-                    if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
+            if (m) {
+                if (m.isCustom) {
+                    ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
+                } else {
+                    for (let i = 1; i <= 20; i++) {
+                        const ingredient = m[`strIngredient${i}`]?.trim();
+                        const measure = m[`strMeasure${i}`]?.trim() || '';
+                        if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
+                    }
                 }
             }
+            
             const [mealTitle, ...translatedItems] = await Promise.all([
-                m.isCustom ? m.strMeal : translateText(m.strMeal, 'de'), ...ingredients.map(i => m.isCustom ? i : translateText(i, 'de'))
+                (m && !m.isCustom) ? translateText(title, 'de') : Promise.resolve(title), 
+                ...ingredients.map(i => (m && !m.isCustom) ? translateText(i, 'de') : Promise.resolve(i))
             ]);
+
             html += `<div class="shop-day-header">${tag}</div><div class="shop-meal-name">${mealTitle}</div><ul class="shopping-list">`;
-            html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
+            if (translatedItems.length > 0) {
+                html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
+            } else {
+                html += `<li style="list-style:none; color:var(--text-muted); font-size:0.85rem;">Keine Zutaten verfügbar</li>`;
+            }
             html += `</ul>`;
         }
         content.innerHTML = html || 'Kein Plan vorhanden.';
     };
-
-    window.printShoppingList = async function() {
-        const modal = document.getElementById('shoppingModal'); if (modal.style.display !== 'flex') await generateShoppingList(); window.print();
-    };
-
+            
     window.shareWhatsApp = async function() {
         let text = "*Einkaufsliste* 🛒\n\n";
         let hasContent = false;
-        
         for (let tag of tage) {
             const m = mealStore[tag];
-            if (!m || !m.strMeal) continue;
+            const titleInput = document.getElementById(`input-${tag}`);
+            const title = titleInput ? titleInput.value.trim() : "";
+            if (!title) continue;
             hasContent = true;
             
             const ingredients = [];
-            if (m.isCustom) {
-                ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
-            } else {
-                for (let i = 1; i <= 20; i++) {
-                    const ingredient = m[`strIngredient${i}`]?.trim();
-                    const measure = m[`strMeasure${i}`]?.trim() || '';
-                    if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
+            if (m) {
+                if (m.isCustom) {
+                    ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
+                } else {
+                    for (let i = 1; i <= 20; i++) {
+                        const ingredient = m[`strIngredient${i}`]?.trim();
+                        const measure = m[`strMeasure${i}`]?.trim() || '';
+                        if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
+                    }
                 }
             }
 
             const [mealTitle, ...translatedItems] = await Promise.all([
-                m.isCustom ? m.strMeal : translateText(m.strMeal, 'de'), 
-                ...ingredients.map(i => m.isCustom ? i : translateText(i, 'de'))
+                (m && !m.isCustom) ? translateText(title, 'de') : Promise.resolve(title), 
+                ...ingredients.map(i => (m && !m.isCustom) ? translateText(i, 'de') : Promise.resolve(i))
             ]);
 
             text += `*${tag}: ${mealTitle}*\n`;
             translatedItems.filter(Boolean).forEach(i => text += `- ${i}\n`);
             text += "\n";
         }
-
-        if (!hasContent) {
-            return alert("Kein Plan vorhanden zum Teilen.");
-        }
-
+        if (!hasContent) return alert("Kein Plan vorhanden zum Teilen.");
         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
     };
 
@@ -1030,24 +1029,6 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         const content = document.getElementById('content' + lang); if (content) content.classList.add('active');
         const btn = document.getElementById('tabBtn' + lang); if (btn) btn.classList.add('active');
-    };
-
-    window.save = async function() {
-        const data = {};
-        tage.forEach(t => {
-            const input = document.getElementById(`input-${t}`); const img = document.getElementById(`img-${t}`); const cat = document.getElementById(`cat-${t}`);
-            data[t] = { title: input ? input.value : "", img: img ? img.src : "", cat: cat ? cat.value : "", raw: mealStore[t] || null };
-        });
-        localStorage.setItem(STORAGE_PLAN, JSON.stringify(data));
-        if (householdId && typeof isRemoteUpdate !== 'undefined' && !isRemoteUpdate) {
-            try { await setDoc(doc(db, "plans", householdId), data); } catch (e) { console.error("Cloud Save Error", e); }
-        }
-    };
-
-    window.toggleTheme = function() {
-        const current = document.body.getAttribute('data-theme') || 'light';
-        const next = current === 'light' ? 'dark' : 'light'; document.body.setAttribute('data-theme', next); localStorage.setItem(STORAGE_THEME, next);
-        updateThemeButton(next);
     };
 
     window.closeModal = function(id) {
