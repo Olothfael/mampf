@@ -369,15 +369,23 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let w = 400, h = (img.height / img.width) * 400;
+                    let w = 400, h = (img.height / img.width) * 400; // Max width 400px
                     canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    resolve(canvas.toDataURL('image/jpeg', 0.7)); // JPEG mit 70% Qualität
                 };
             };
         });
     }
+
+    window.showMessage = (t, type) => {
+        const s = document.getElementById('statusMessage');
+        if (!s) return;
+        s.innerText = t;
+        s.className = 'status-message message-' + type;
+        setTimeout(() => { if(s.innerText === t) s.innerText = ''; }, 4000);
+    };
 
     window.scaleIngredient = function(line) {
         if (portionFactor === 1) return line;
@@ -398,14 +406,6 @@
         let scaled = amount * portionFactor;
         let formatted = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(1);
         return line.replace(numberMatch[0], formatted);
-    };
-
-    window.showMessage = (t, type) => {
-        const s = document.getElementById('statusMessage');
-        if (!s) return;
-        s.innerText = t;
-        s.className = 'status-message message-' + type;
-        setTimeout(() => { if(s.innerText === t) s.innerText = ''; }, 4000);
     };
 
     function updateThemeButton(theme) {
@@ -433,7 +433,7 @@
         const cacheKey = `${text}_${lang}`;
         if (translationCache[cacheKey]) return translationCache[cacheKey];
         try {
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`);
+            const res = await fetch(`<https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}>`);
             const data = await res.json();
             const result = data[0].map(s => s[0]).join('');
             translationCache[cacheKey] = result;
@@ -470,7 +470,10 @@
 
     window.init = function() {
         const container = document.getElementById('weekPlan');
-        if (!container) return;
+        if (!container) {
+            console.error("Element #weekPlan not found.");
+            return;
+        }
         const saved = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
         const theme = localStorage.getItem(STORAGE_THEME) || 'light';
         document.body.setAttribute('data-theme', theme);
@@ -487,7 +490,7 @@
                 <div class="day-card">
                     <div class="card-top">
                         <span class="day-label">${tag}</span>
-                        <select class="cat-select" id="cat-${tag}" onchange="save()">
+                        <select class="cat-select" id="cat-${tag}" onchange="window.save()">
                             <option value="" ${data.cat === '' ? 'selected' : ''}>✨ Alles</option>
                             <option value="MY" ${data.cat === 'MY' ? 'selected' : ''}>👤 Eigene</option>
                             <option value="Vegetarian" ${data.cat === 'Vegetarian' ? 'selected' : ''}>🥗 Veggie</option>
@@ -500,9 +503,9 @@
                         <img id="img-${tag}" class="meal-img ${data.img ? '' : 'placeholder'}" src="${imgSrc}">
                         <div class="meal-info">
                             <input type="text" id="input-${tag}" class="meal-input" value="${data.title}" readonly>
-                            <div id="btn-${tag}" class="recipe-btn" onclick="openRecipe('${tag}')" style="display:${data.title ? 'block' : 'none'}">📖 Rezept</div>
+                            <div id="btn-${tag}" class="recipe-btn" onclick="window.openRecipe('${tag}')" style="display:${data.title ? 'block' : 'none'}">📖 Rezept</div>
                         </div>
-                        <button class="btn-round" onclick="fetchMeal('${tag}')">🎲</button>
+                        <button class="btn-round" onclick="window.fetchMeal('${tag}')">🎲</button>
                     </div>
                 </div>`;
         });
@@ -535,10 +538,10 @@
                 if (myRecipes.length === 0) return alert("Keine eigenen Rezepte!");
                 meal = myRecipes[Math.floor(Math.random() * myRecipes.length)];
             } else {
-                const res = await fetch(catVal ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${catVal}` : 'https://www.themealdb.com/api/json/v1/1/random.php');
+                const res = await fetch(catVal ? `<https://www.themealdb.com/api/json/v1/1/filter.php?c=${catVal}>` : 'https://www.themealdb.com/api/json/v1/1/random.php');
                 const data = await res.json();
                 const temp = data.meals[Math.floor(Math.random() * data.meals.length)];
-                const dRes = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${temp.idMeal}`);
+                const dRes = await fetch(`<https://www.themealdb.com/api/json/v1/1/lookup.php?i=${temp.idMeal}>`);
                 const dData = await dRes.json();
                 meal = dData.meals[0];
             }
@@ -598,7 +601,7 @@
             } else { html += `<li>Keine Zutaten</li>`; }
             return html + `</ul>`;
         }));
-        content.innerHTML = results.join('') || 'Kein Plan.';
+        content.innerHTML = results.join('') || 'Kein Plan vorhanden.';
     };
 
     window.shareWhatsApp = async function() {
@@ -618,7 +621,7 @@
             return dayText + "\n";
         }));
         text += results.join('');
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+        window.open(`<https://wa.me/?text=${encodeURIComponent(text)}>`);
     };
 
     window.saveCustomRecipe = async function() {
@@ -648,14 +651,23 @@
     if (householdId) {
         const syncS = document.getElementById('syncStatus');
         if(syncS) syncS.style.display = 'block';
-        onSnapshot(doc(db, "plans", householdId), (snap) => {
-            if (snap.exists() && !isRemoteUpdate) {
-                isRemoteUpdate = true;
-                localStorage.setItem(STORAGE_PLAN, JSON.stringify(snap.data()));
-                window.init();
-                isRemoteUpdate = false;
-            }
-        });
+        try { // Added try-catch for Firebase setup
+            const planRef = doc(db, "plans", householdId);
+            onSnapshot(planRef, (snap) => {
+                if (snap.exists() && !isRemoteUpdate) {
+                    isRemoteUpdate = true;
+                    localStorage.setItem(STORAGE_PLAN, JSON.stringify(snap.data()));
+                    window.init();
+                    isRemoteUpdate = false;
+                }
+            }, (error) => { // Added error handler for onSnapshot
+                console.error("Firebase onSnapshot error:", error);
+                window.showMessage("Fehler bei Cloud-Synchronisation.", "error");
+            });
+        } catch (e) {
+            console.error("Error setting up Firebase onSnapshot:", e);
+            window.showMessage("Fehler beim Starten der Cloud-Synchronisation.", "error");
+        }
     }
 
     window.addEventListener('click', event => {
@@ -663,7 +675,12 @@
         if (modal && event.target === modal) window.closeModal(modal.id);
     });
 
-    window.init();
+    try { // Added try-catch for initial init call
+        window.init();
+    } catch (e) {
+        console.error("Error during initial window.init():", e);
+        alert("Ein kritischer Fehler ist aufgetreten. Bitte die Browser-Konsole prüfen (F12).");
+    }
 </script>
 </body>
 </html>
