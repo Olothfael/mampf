@@ -547,7 +547,20 @@
     <div class="modal-content">
         <span onclick="closeModal('shoppingModal')" style="float:right; cursor:pointer; font-weight:800; font-size:1.5rem;">×</span>
         <h2 style="text-align: center; margin-bottom: 20px;">Einkaufsliste</h2>
-        <div style="text-align:center;margin-bottom:16px;">l favorite-toggle" onclick="toggleFavorite()">★ Favorit</button>
+        <div style="text-align:center;margin-bottom:16px;">
+            <button class="btn-action small" onclick="printShoppingList()">🖨️ Drucken</button>
+            <button class="btn-action small" style="background:#25D366; color:white; margin-left:8px;" onclick="window.shareWhatsApp()">📱 WhatsApp</button>
+        </div>
+        <div id="listContent"></div>
+    </div>
+</div>
+
+<div id="recipeModal" class="modal">
+    <div class="modal-content">
+        <span onclick="closeRecipe()" class="modal-close">×</span>
+        <div class="modal-header">
+            <h2 id="modalTitle">Rezept</h2>
+            <button id="favoriteBtn" class="btn-action small favorite-toggle" onclick="toggleFavorite()">★ Favorit</button>
         </div>
         <div class="tab-nav">
             <button id="tabBtnDE" class="tab-btn active" onclick="showTab('DE')">
@@ -613,6 +626,29 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    // Helferfunktion zum Verkleinern von Bildern
+    async function compressImage(file, maxWidth = 600, maxHeight = 600, quality = 0.7) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = e => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > maxWidth) { h *= maxWidth / w; w = maxWidth; } }
+                    else { if (h > maxHeight) { w *= maxHeight / h; h = maxHeight; } }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+            };
+            reader.onerror = reject;
+        });
+    }
 
     const tage = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
     const STORAGE_PLAN = 'gourmet_v43';
@@ -835,13 +871,9 @@
 
         let imgBase64 = null;
         if (imgInput.files && imgInput.files[0]) {
-            const file = imgInput.files[0];
-            if (file.size > 500000) return alert('Das Bild ist zu groß (max. 500KB erlaubt).');
-            imgBase64 = await new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(file);
-            });
+            try {
+                imgBase64 = await compressImage(imgInput.files[0]);
+            } catch (e) { console.error("Bild-Kompression fehlgeschlagen", e); }
         }
 
         myRecipes.push({ strMeal: name, strInstructions: ins, isCustom: true, ingredients: ingRaw, img: imgBase64 });
