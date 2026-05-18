@@ -11,53 +11,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366ff; /* Modernes Indigo */ /* Modernes Indigo */ /* Modernes Indigo */ /* Modernes Indigo */ /* Modernes Indigo */ /* Modernes Indigo */ /* Modernes Indigo */
-            --primary-hoverima4r46eherima4r46eherima4r46eherima4r46eherima4r46eherima4r46eher: #4f46e5;
-            --accent###f59e0b; /* W0rmes Ambeb/O/*rgb */
-            --be:/Or8ba c;
-      *    --body-bg: 159
-            --be:/Or8ba c;
-      *    --body-bg:0f 75a
-            --be:/Or8ba c;5569
-      *    --body-bg:0fcbd5 1
-            --sue:/ss8ba c;5569
-      *    --body-bg:0fcbd5 1
-            --sue:/ss8ba 0;5516px -30, 0, 0, 0.) 0 4px 6px-px rgba(0, 005
-      *    --body-bg:0fcbd5 1
-            --sue:/ss8ea 0;5516px -30, 0, 0, 0.) 0 4px 6px-px rgba(0, 005
-      *    --body-bg:0fcbd5 1
-            --sug: 8ea93b0;5516px -30, 0, 0, 0.) 0 4px 6px-px rgba(0, 005
-            --body-bg0f
-            --surimye 93b036 /* Leicht heller als der BG */f11px -3569* Mod0, 0, 0, 0.e)n 0 4px 6pxe-spx rgba(0, 0In0go */5
-            --primary0f
-            --succe:e#93b09e /* Leicht heller als der BG */b1;px -3569 Warm0, 0, 0, 0.e)  0 4px 6pxA-mpx rgba(0, 0er0range5*/
-            --bg: #f8fa769
-            --suodyge 93201f 2/px -5 Leicht heller als dr BG */51fpx -3;0, 0, 0, 0.) 0 4px 6px-px rgba(0, 005
-            --card: #ff769
-            --text:1e29320b; 2/px -5 Leicht heller als dr BG */1px -30, 0, 0, 0.) 0 4px 6px-px rgba(0, 005
-            --text-mute769
-            --borde ee93208f 2/px -5 Leicht heller als dr BG */0;
-            --accent: #769
-            --text:0e19320a; 2/px -5 Leicht heller als dr BG */
-            --text-mute769
-            --border: #c205e 2/px -5 Leicht heller als dr BG */1;
-            --success: 0798691;
-            --danger: #e204442;px -5
-            --shadow: 087x 6950px rgba(15, 23, 42, 0.08);
-            --shadow: 0 20px 21px -5px -3px rgba(0, 0, 0 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --body-bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #0f172a;
+            --text-muted: #475569;
+            --border: #cbd5e1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         [data-theme="dark"] {
-            --bg: #0f172a;
-            --body-bg: linear-gradient(180deg, #020617 0%, #0f172a 100%);
-            --card: #1e293b;
             --bg: #1e293b;
             --body-bg: #0f172a;
-            --card: #1e293b; /* Leicht heller als der BG */
+            --card: #1e293b;
             --text: #f8fafc;
             --text-muted: #cbd5e1;
-            --border: #334155;
-            --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
             --border: #475569;
             --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
         }
@@ -134,6 +107,16 @@
             color: var(--text-muted);
         }
 
+        .status-message.message-error {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .status-message.message-success {
+            color: var(--success);
+            font-weight: 700;
+        }
+
         .card-top {
             display: flex;
             justify-content: space-between;
@@ -186,7 +169,7 @@
         }
 
         .card-body {
-            display: flex;0
+            display: flex;
             gap: 16px;
             align-items: center;
             flex-wrap: wrap;
@@ -204,10 +187,9 @@
         }
 
         .meal-img.placeholder {
-            border: none;
-            background: #f8fafc;
+            border: 2px dashed var(--border);
+            background: var(--bg);
             filter: grayscale(0.2) contrast(0.95);
-            color: var(--text-muted);
         }
 
         .meal-info {
