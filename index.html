@@ -98,7 +98,7 @@
         .day-label { font-weight: 800; font-size: 1.1rem; color: var(--accent); }
 
         .cat-select {
-            padding: 8px 12px;
+            padding: 8px 10px;
             border-radius: 12px;
             border: 1px solid var(--border);
             background: var(--bg);
@@ -121,7 +121,7 @@
             background: var(--bg);
             border: 1px solid var(--border);
         }
-        .meal-img.placeholder { border: none; } /* Gestrichelter Rahmen entfernt */
+        .meal-img.placeholder { border: none; opacity: 0.6; }
 
         .meal-info { flex-grow: 1; min-width: 0; }
         .meal-input {
@@ -205,6 +205,7 @@
         .tab-nav { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 15px; padding-bottom: 8px; }
         .tab-btn { padding: 8px 12px; border-radius: 8px; border: none; background: var(--bg); cursor: pointer; font-weight: 700; }
         .tab-btn.active { background: var(--primary); color: white; }
+        .tab-btn svg { width: 20px; height: 14px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
@@ -214,7 +215,6 @@
         .shopping-list li { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; cursor: pointer; }
         .shopping-list li.checked { opacity: 0.5; text-decoration: line-through; }
         .shop-day-header { font-weight: 800; color: var(--accent); margin-top: 20px; border-bottom: 2px solid var(--border); }
-
         @media (max-width: 600px) {
             .card-body { flex-direction: column; text-align: center; }
             .meal-img { width: 100%; height: 150px; }
@@ -245,7 +245,7 @@
         <div class="header-actions">
             <button onclick="window.toggleTheme()" id="themeBtn" class="btn-action small">🌙</button>
             <select id="portionSelect" class="cat-select" onchange="window.updatePortionFactor()">
-                <option value="1">1 Person</option>
+                <option value="1">Original Rezeptportion</option>
                 <option value="2">2 Personen</option>
                 <option value="4">4 Personen</option>
             </select>
@@ -279,15 +279,15 @@
         <h2 id="modalTitle">Rezept</h2>
         <div class="tab-nav">
             <button id="tabBtnDE" class="tab-btn active" onclick="window.showTab('DE')">
-                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:24px;height:16px;vertical-align:middle;margin-right:5px;"><rect width="36" height="24" fill="#000"/><rect y="8" width="36" height="8" fill="#D00"/><rect y="16" width="36" height="8" fill="#FFCE00"/></svg>
+                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="24" fill="#000"/><rect y="8" width="36" height="8" fill="#D00"/><rect y="16" width="36" height="8" fill="#FFCE00"/></svg>
                 Deutsch
             </button>
             <button id="tabBtnEN" class="tab-btn" onclick="window.showTab('EN')">
-                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:24px;height:16px;vertical-align:middle;margin-right:5px;"><rect width="36" height="24" fill="#012169"/><path d="M0 0l36 24M36 0L0 24" stroke="#fff" stroke-width="4"/><path d="M0 0l36 24M36 0L0 24" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#fff" stroke-width="4"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/></svg>
+                <svg viewBox="0 0 36 24" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="24" fill="#012169"/><path d="M0 0l36 24M36 0L0 24" stroke="#fff" stroke-width="4"/><path d="M0 0l36 24M36 0L0 24" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#fff" stroke-width="4"/><path d="M13 0v24M23 0v24M0 7h36M0 17h36" stroke="#C8102E" stroke-width="2" transform="scale(0.9) translate(1.8,1.2)"/></svg>
                 English
             </button>
             <button id="tabBtnVideo" class="tab-btn" onclick="window.showTab('Video')">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="width:24px;height:16px;vertical-align:middle;margin-right:5px;"><rect width="24" height="24" rx="4" fill="#FF0000"/><path d="M9.5 8.5L15.5 12L9.5 15.5V8.5Z" fill="#fff"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="4" fill="#FF0000"/><path d="M9.5 8.5L15.5 12L9.5 15.5V8.5Z" fill="#fff"/></svg>
                 YouTube
             </button>
         </div>
@@ -687,7 +687,7 @@
                 await setDoc(doc(db, "plans", householdId), data);
             }
         } catch (e) {
-            console.error("Speichern fehlgeschlagen:", e);
+            console.warn("Lokal Speichern fehlgeschlagen (Speicher voll?):", e);
             if (e.name === 'QuotaExceededError') {
                 window.showMessage("Speicher voll! Bilder löschen.", "error");
             }
@@ -725,8 +725,8 @@
             mealStore[tag] = meal;
             await window.save();
         } catch (error) {
-            console.error(error);
-            alert('Fehler beim Laden des Rezepts. Bitte versuche es erneut.');
+            console.error("Fehler beim Laden/Speichern:", error);
+            // Wir zeigen keinen Alert mehr, wenn das Rezept sichtbar ist aber das Speichern (Quota) fehlschlug
         }
     };
 
