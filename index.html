@@ -895,6 +895,33 @@
         window.closeModal('customModal');
     };
 
+    window.save = async function() {
+        const data = {};
+        tage.forEach(t => {
+            const input = document.getElementById(`input-${t}`);
+            const img = document.getElementById(`img-${t}`);
+            const cat = document.getElementById(`cat-${t}`);
+            data[t] = {
+                title: input ? input.value : "",
+                img: (img && img.src !== PLACEHOLDER_IMG) ? img.src : "",
+                cat: cat ? cat.value : "",
+                raw: mealStore[t] || null
+            };
+        });
+
+        try {
+            localStorage.setItem(STORAGE_PLAN, JSON.stringify(data));
+            if (householdId && typeof isRemoteUpdate !== 'undefined' && !isRemoteUpdate) {
+                await setDoc(doc(db, "plans", householdId), data);
+            }
+        } catch (e) {
+            console.error("Speichern fehlgeschlagen:", e);
+            if (e.name === 'QuotaExceededError') {
+                window.showMessage("Speicher voll! Bilder löschen.", "error");
+            }
+        }
+    };
+
     window.fetchMeal = async function(tag) {
         const catSelect = document.getElementById(`cat-${tag}`);
         const category = catSelect ? catSelect.value : "";
@@ -924,7 +951,7 @@
             document.getElementById(`img-${tag}`).style.display = 'block';
             document.getElementById(`btn-${tag}`).style.display = 'block';
             mealStore[tag] = meal;
-            window.save();
+            await window.save();
         } catch (error) {
             console.error(error);
             alert('Fehler beim Laden des Rezepts. Bitte versuche es erneut.');
