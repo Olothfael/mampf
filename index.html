@@ -11,9 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1;
+            --primary: #6366f1; /* Modernes Indigo */
             --primary-hover: #4f46e5;
-            --accent: #f59e0b;
+            --accent: #f59e0b; /* Warmes Amber/Orange */
             --bg: #f8fafc;
             --body-bg: #f1f5f9;
             --card: #ffffff;
@@ -222,7 +222,6 @@
             .recipe-btn { margin: 0 auto; }
         }
     </style>
-    <link rel="manifest" href="manifest.json">
     <script type="importmap">
       { "imports": { "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js", "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js" } }
     </script>
@@ -382,22 +381,31 @@
 
     window.scaleIngredient = function(line) {
         if (portionFactor === 1) return line;
+        if (!line) return "";
         const numberMatch = line.match(/^(\d+([\.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)(?=\s|$)/);
         if (!numberMatch) return line;
-        const raw = numberMatch[0].replace(',', '.');
+        const rawStr = numberMatch[0].replace(',', '.');
         let amount = 0;
-        if (raw.includes(' ') || raw.includes('/')) {
-            const parts = raw.split(/\s+/);
+        if (rawStr.includes(' ') || rawStr.includes('/')) {
+            const parts = rawStr.split(/\s+/);
             parts.forEach(p => {
                 if (p.includes('/')) {
                     const [n, d] = p.split('/');
                     amount += (Number(n) / Number(d));
                 } else { amount += Number(p); }
             });
-        } else { amount = Number(raw); }
+        } else { amount = Number(rawStr); }
         let scaled = amount * portionFactor;
         let formatted = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(1);
         return line.replace(numberMatch[0], formatted);
+    };
+
+    window.showMessage = (t, type) => {
+        const s = document.getElementById('statusMessage');
+        if (!s) return;
+        s.innerText = t;
+        s.className = 'status-message message-' + type;
+        setTimeout(() => { if(s.innerText === t) s.innerText = ''; }, 4000);
     };
 
     function updateThemeButton(theme) {
@@ -425,7 +433,7 @@
         const cacheKey = `${text}_${lang}`;
         if (translationCache[cacheKey]) return translationCache[cacheKey];
         try {
-            const res = await fetch(`<https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}>`);
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`);
             const data = await res.json();
             const result = data[0].map(s => s[0]).join('');
             translationCache[cacheKey] = result;
@@ -433,6 +441,26 @@
             return result;
         } catch (e) { return text; }
     }
+
+    window.closeModal = id => {
+        const m = document.getElementById(id);
+        if (m) m.style.display = 'none';
+    };
+
+    window.closeRecipe = () => {
+        window.closeModal('recipeModal');
+        const vb = document.getElementById('videoBox');
+        if(vb) vb.innerHTML = '';
+    };
+
+    window.showTab = lang => {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        const targetContent = document.getElementById('content' + lang);
+        const targetBtn = document.getElementById('tabBtn' + lang);
+        if (targetContent) targetContent.classList.add('active');
+        if (targetBtn) targetBtn.classList.add('active');
+    };
 
     function getYoutubeVideoId(url) {
         if (!url) return null;
@@ -442,11 +470,13 @@
 
     window.init = function() {
         const container = document.getElementById('weekPlan');
+        if (!container) return;
         const saved = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
         const theme = localStorage.getItem(STORAGE_THEME) || 'light';
         document.body.setAttribute('data-theme', theme);
         updateThemeButton(theme);
-        document.getElementById('portionSelect').value = portionFactor;
+        const pSel = document.getElementById('portionSelect');
+        if (pSel) pSel.value = portionFactor;
         
         container.innerHTML = '';
         tage.forEach(tag => {
@@ -457,7 +487,7 @@
                 <div class="day-card">
                     <div class="card-top">
                         <span class="day-label">${tag}</span>
-                        <select class="cat-select" id="cat-${tag}" onchange="window.save()">
+                        <select class="cat-select" id="cat-${tag}" onchange="save()">
                             <option value="" ${data.cat === '' ? 'selected' : ''}>✨ Alles</option>
                             <option value="MY" ${data.cat === 'MY' ? 'selected' : ''}>👤 Eigene</option>
                             <option value="Vegetarian" ${data.cat === 'Vegetarian' ? 'selected' : ''}>🥗 Veggie</option>
@@ -470,9 +500,9 @@
                         <img id="img-${tag}" class="meal-img ${data.img ? '' : 'placeholder'}" src="${imgSrc}">
                         <div class="meal-info">
                             <input type="text" id="input-${tag}" class="meal-input" value="${data.title}" readonly>
-                            <div id="btn-${tag}" class="recipe-btn" onclick="window.openRecipe('${tag}')" style="display:${data.title ? 'block' : 'none'}">📖 Rezept</div>
+                            <div id="btn-${tag}" class="recipe-btn" onclick="openRecipe('${tag}')" style="display:${data.title ? 'block' : 'none'}">📖 Rezept</div>
                         </div>
-                        <button class="btn-round" onclick="window.fetchMeal('${tag}')">🎲</button>
+                        <button class="btn-round" onclick="fetchMeal('${tag}')">🎲</button>
                     </div>
                 </div>`;
         });
@@ -494,21 +524,21 @@
         try {
             localStorage.setItem(STORAGE_PLAN, JSON.stringify(data));
             if (householdId && !isRemoteUpdate) { await setDoc(doc(db, "plans", householdId), data); }
-        } catch (e) { console.warn("Save failed", e); }
+        } catch (e) { console.warn("Save failed", e); if(e.name === 'QuotaExceededError') window.showMessage("Speicher voll!", "error"); }
     };
 
     window.fetchMeal = async function(tag) {
-        const cat = document.getElementById(`cat-${tag}`).value;
+        const catVal = document.getElementById(`cat-${tag}`).value;
         try {
             let meal;
-            if (cat === 'MY') {
+            if (catVal === 'MY') {
                 if (myRecipes.length === 0) return alert("Keine eigenen Rezepte!");
                 meal = myRecipes[Math.floor(Math.random() * myRecipes.length)];
             } else {
-                const res = await fetch(cat ? `<https://www.themealdb.com/api/json/v1/1/filter.php?c=${cat}>` : 'https://www.themealdb.com/api/json/v1/1/random.php');
+                const res = await fetch(catVal ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${catVal}` : 'https://www.themealdb.com/api/json/v1/1/random.php');
                 const data = await res.json();
                 const temp = data.meals[Math.floor(Math.random() * data.meals.length)];
-                const dRes = await fetch(`<https://www.themealdb.com/api/json/v1/1/lookup.php?i=${temp.idMeal}>`);
+                const dRes = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${temp.idMeal}`);
                 const dData = await dRes.json();
                 meal = dData.meals[0];
             }
@@ -519,7 +549,7 @@
             document.getElementById(`img-${tag}`).classList.remove('placeholder');
             document.getElementById(`btn-${tag}`).style.display = 'block';
             mealStore[tag] = meal;
-            window.save();
+            await window.save();
         } catch (e) { console.error(e); }
     };
 
@@ -531,21 +561,21 @@
         let ings = [];
         if (meal.isCustom) { ings = meal.ingredients; } 
         else { for (let i = 1; i <= 20; i++) { if (meal[`strIngredient${i}`]) ings.push(`${meal[`strMeasure${i}`] || ''} ${meal[`strIngredient${i}`]}`); } }
-        const scaledIngs = ings.map(i => window.scaleIngredient(i));
+        const scaledIngs = ings.map(i => window.scaleIngredient(i.trim()));
         document.getElementById('ingEN').innerHTML = scaledIngs.map(i => `<div>${i}</div>`).join('');
-        document.getElementById('insEN').innerText = meal.strInstructions;
+        document.getElementById('insEN').innerText = meal.strInstructions || '';
         const transIngs = await Promise.all(scaledIngs.map(i => translateText(i, 'de')));
         document.getElementById('ingDE').innerHTML = transIngs.map(i => `<div style="background:var(--bg);padding:8px;border-radius:8px;">${i}</div>`).join('');
         document.getElementById('insDE').innerText = meal.isCustom ? meal.strInstructions : await translateText(meal.strInstructions, 'de');
-        
-        const vId = getYoutubeVideoId(meal.strYoutube);
+        const vId = meal.strYoutube ? getYoutubeVideoId(meal.strYoutube) : null;
         const videoBox = document.getElementById('videoBox');
+        const tabBtnVideo = document.getElementById('tabBtnVideo');
         if (vId) {
-            document.getElementById('tabBtnVideo').style.display = 'flex';
+            if(tabBtnVideo) tabBtnVideo.style.display = 'flex';
             videoBox.innerHTML = `<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="https://www.youtube-nocookie.com/embed/${vId}" allowfullscreen></iframe>`;
             window.showTab('Video');
         } else {
-            document.getElementById('tabBtnVideo').style.display = 'none';
+            if(tabBtnVideo) tabBtnVideo.style.display = 'none';
             window.showTab('DE');
         }
     };
@@ -554,15 +584,16 @@
         document.getElementById('shoppingModal').style.display = 'flex';
         const content = document.getElementById('listContent');
         content.innerHTML = 'Lädt...';
-        const results = await Promise.all(tage.map(async t => {
+        const results = await Promise.all(tage.map(async (t) => {
             const m = mealStore[t];
-            const title = document.getElementById(`input-${t}`).value;
-            if (!title) return '';
-            let html = `<div class="shop-day-header">${t}: ${title}</div><ul class="shopping-list">`;
+            const tInp = document.getElementById(`input-${t}`);
+            const tVal = tInp ? tInp.value : '';
+            if (!tVal) return '';
+            let html = `<div class="shop-day-header">${t}: ${tVal}</div><ul class="shopping-list">`;
             if (m) {
                 let ings = m.isCustom ? m.ingredients : [];
                 if (!m.isCustom) { for (let i = 1; i <= 20; i++) if (m[`strIngredient${i}`]) ings.push(`${m[`strMeasure${i}`] || ''} ${m[`strIngredient${i}`]}`); }
-                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i), 'de')));
+                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i.trim()), 'de')));
                 html += trans.map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
             } else { html += `<li>Keine Zutaten</li>`; }
             return html + `</ul>`;
@@ -572,33 +603,40 @@
 
     window.shareWhatsApp = async function() {
         let text = "*Einkaufsliste*\n\n";
-        for (let t of tage) {
-            const title = document.getElementById(`input-${t}`).value;
-            if (!title) continue;
-            text += `*${t}: ${title}*\n`;
-            if (mealStore[t]) {
-                let ings = mealStore[t].isCustom ? mealStore[t].ingredients : [];
-                if (!mealStore[t].isCustom) { for (let i = 1; i <= 20; i++) if (mealStore[t][`strIngredient${i}`]) ings.push(`${mealStore[t][`strMeasure${i}`] || ''} ${mealStore[t][`strIngredient${i}`]}`); }
-                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i), 'de')));
-                trans.forEach(i => text += `- ${i}\n`);
+        const results = await Promise.all(tage.map(async (t) => {
+            const tInp = document.getElementById(`input-${t}`);
+            const tVal = tInp ? tInp.value : '';
+            if (!tVal) return '';
+            let dayText = `*${t}: ${tVal}*\n`;
+            const m = mealStore[t];
+            if (m) {
+                let ings = m.isCustom ? m.ingredients : [];
+                if (!m.isCustom) { for (let i = 1; i <= 20; i++) if (m[`strIngredient${i}`]) ings.push(`${m[`strMeasure${i}`] || ''} ${m[`strIngredient${i}`]}`); }
+                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i.trim()), 'de')));
+                trans.forEach(it => dayText += `- ${it}\n`);
             }
-            text += "\n";
-        }
-        window.open(`<https://wa.me/?text=${encodeURIComponent(text)}>`);
+            return dayText + "\n";
+        }));
+        text += results.join('');
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
     };
 
     window.saveCustomRecipe = async function() {
-        const name = document.getElementById('customName').value;
+        const name = document.getElementById('customName').value.trim();
         const ings = document.getElementById('customIng').value.split('\n').filter(i => i.trim());
-        const ins = document.getElementById('customIns').value;
+        const ins = document.getElementById('customIns').value.trim();
+        if (!name) return alert("Bitte Name angeben!");
         const file = document.getElementById('customImgInput').files[0];
         let img = "";
         if (file) img = await compressImage(file);
         myRecipes.push({ strMeal: name, ingredients: ings, strInstructions: ins, isCustom: true, img: img });
         localStorage.setItem(STORAGE_RECIPES, JSON.stringify(myRecipes));
         window.closeModal('customModal');
+        window.showMessage("Gespeichert!", "success");
         window.init();
     };
+
+    window.resetPlan = () => { if(confirm("Wirklich alles löschen?")) { localStorage.removeItem(STORAGE_PLAN); mealStore = {}; window.init(); }};
 
     window.joinHousehold = function() {
         const id = document.getElementById('householdIdInput').value.trim().toLowerCase();
@@ -606,23 +644,10 @@
     };
 
     window.leaveHousehold = function() { localStorage.removeItem(STORAGE_HOUSEHOLD); location.reload(); };
-    window.closeModal = id => document.getElementById(id).style.display = 'none';
-    window.closeRecipe = () => window.closeModal('recipeModal');
-    window.showTab = lang => {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('content' + lang).classList.add('active');
-        document.getElementById('tabBtn' + lang).classList.add('active');
-    };
-    window.resetPlan = () => { if(confirm("Löschen?")) { localStorage.removeItem(STORAGE_PLAN); location.reload(); }};
-    window.showMessage = (t, type) => {
-        const s = document.getElementById('statusMessage');
-        s.innerText = t; s.className = 'status-message message-' + type;
-        setTimeout(() => s.innerText = '', 4000);
-    };
 
     if (householdId) {
-        document.getElementById('syncStatus').style.display = 'block';
+        const syncS = document.getElementById('syncStatus');
+        if(syncS) syncS.style.display = 'block';
         onSnapshot(doc(db, "plans", householdId), (snap) => {
             if (snap.exists() && !isRemoteUpdate) {
                 isRemoteUpdate = true;
@@ -632,6 +657,11 @@
             }
         });
     }
+
+    window.addEventListener('click', event => {
+        const modal = event.target.closest('.modal');
+        if (modal && event.target === modal) window.closeModal(modal.id);
+    });
 
     window.init();
 </script>
