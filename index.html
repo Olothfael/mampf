@@ -121,7 +121,7 @@
             background: var(--bg);
             border: 1px solid var(--border);
         }
-        .meal-img.placeholder { border: 2px dashed var(--border); }
+        .meal-img.placeholder { border: none; }
 
         .meal-info { flex-grow: 1; min-width: 0; }
         .meal-input {
@@ -528,6 +528,17 @@
         btn.textContent = theme === 'light' ? '🌙' : '☀️';
         btn.title = theme === 'light' ? 'Dunkles Theme' : 'Helles Theme';
     }
+    // Make updateThemeButton globally accessible
+    window.updateThemeButton = updateThemeButton;
+
+    // Override the default toggleTheme to not reload the page
+    window.toggleTheme = function() {
+        const current = document.body.getAttribute('data-theme') || 'light';
+        const next = current === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem(STORAGE_THEME, next);
+        window.updateThemeButton(next); // Update button text directly
+    };
 
     window.openCustomEditor = function() {
         document.getElementById('customModal').style.display = 'flex';
