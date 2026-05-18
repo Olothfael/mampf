@@ -11,9 +11,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #6366f1; /* Modernes Indigo */
+            --primary: #6366f1;
             --primary-hover: #4f46e5;
-            --accent: #f59e0b; /* Warmes Amber/Orange */
+            --accent: #f59e0b;
             --bg: #f8fafc;
             --body-bg: #f1f5f9;
             --card: #ffffff;
@@ -203,9 +203,9 @@
         .modal-close { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 1.5rem; }
 
         .tab-nav { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 15px; padding-bottom: 8px; }
-        .tab-btn { padding: 8px 12px; border-radius: 8px; border: none; background: var(--bg); cursor: pointer; font-weight: 700; }
+        .tab-btn { padding: 8px 12px; border-radius: 8px; border: none; background: var(--bg); cursor: pointer; font-weight: 700; display: flex; align-items: center; }
         .tab-btn.active { background: var(--primary); color: white; }
-        .tab-btn svg { width: 20px; height: 14px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+        .tab-btn svg { width: 20px; height: 14px; margin-right: 6px; border-radius: 2px; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
@@ -215,6 +215,7 @@
         .shopping-list li { padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; cursor: pointer; }
         .shopping-list li.checked { opacity: 0.5; text-decoration: line-through; }
         .shop-day-header { font-weight: 800; color: var(--accent); margin-top: 20px; border-bottom: 2px solid var(--border); }
+
         @media (max-width: 600px) {
             .card-body { flex-direction: column; text-align: center; }
             .meal-img { width: 100%; height: 150px; }
@@ -222,15 +223,8 @@
         }
     </style>
     <link rel="manifest" href="manifest.json">
-    <!-- Firebase SDK (Modular) -->
     <script type="importmap">
       { "imports": { "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js", "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js" } }
-    </script>
-    <meta name="theme-color" content="#10b981">
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed', err));
-        }
     </script>
 </head>
 <body>
@@ -238,7 +232,7 @@
 <div class="app-container">
     <div class="app-top">
         <div class="app-title">
-            <h1>Essensplan für die Woche</h1>
+            <h1>Essensplan</h1>
             <p class="subtitle">Plane deine Woche und teile sie mit anderen.</p>
             <div id="syncStatus" class="sync-badge" style="display:none; width:fit-content; margin-top:8px;">☁️ Cloud Synchronisation aktiv</div>
         </div>
@@ -376,11 +370,11 @@
                 img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    let w = 400, h = (img.height / img.width) * 400; // Max width 400px
+                    let w = 400, h = (img.height / img.width) * 400;
                     canvas.width = w; canvas.height = h;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7)); // JPEG mit 70% Qualität
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
                 };
             };
         });
@@ -390,40 +384,65 @@
         if (portionFactor === 1) return line;
         const numberMatch = line.match(/^(\d+([\.,]\d+)?|\d+\s+\d+\/\d+|\d+\/\d+)(?=\s|$)/);
         if (!numberMatch) return line;
-
         const raw = numberMatch[0].replace(',', '.');
         let amount = 0;
-
         if (raw.includes(' ') || raw.includes('/')) {
-            const parts = raw.split(/\s+/); // Split by space for mixed fractions
+            const parts = raw.split(/\s+/);
             parts.forEach(p => {
                 if (p.includes('/')) {
                     const [n, d] = p.split('/');
                     amount += (Number(n) / Number(d));
-                } else {
-                    amount += Number(p);
-                }
+                } else { amount += Number(p); }
             });
-        } else {
-            amount = Number(raw);
-        }
-
+        } else { amount = Number(raw); }
         let scaled = amount * portionFactor;
-        let formatted = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(1); // Eine Nachkommastelle
+        let formatted = Number.isInteger(scaled) ? String(scaled) : scaled.toFixed(1);
         return line.replace(numberMatch[0], formatted);
     };
 
+    function updateThemeButton(theme) {
+        const btn = document.getElementById('themeBtn');
+        if (!btn) return;
+        btn.textContent = theme === 'light' ? '🌙' : '☀️';
+    }
+
+    window.toggleTheme = function() {
+        const current = document.body.getAttribute('data-theme') || 'light';
+        const next = current === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem(STORAGE_THEME, next);
+        updateThemeButton(next);
+    };
+
+    window.updatePortionFactor = function() {
+        portionFactor = Number(document.getElementById('portionSelect').value);
+        localStorage.setItem(STORAGE_PORTION, portionFactor);
+        window.init();
+    };
+
+    async function translateText(text, lang) {
+        if (!text) return '';
+        const cacheKey = `${text}_${lang}`;
+        if (translationCache[cacheKey]) return translationCache[cacheKey];
+        try {
+            const res = await fetch(`<https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}>`);
+            const data = await res.json();
+            const result = data[0].map(s => s[0]).join('');
+            translationCache[cacheKey] = result;
+            localStorage.setItem('translation_cache', JSON.stringify(translationCache));
+            return result;
+        } catch (e) { return text; }
+    }
+
+    function getYoutubeVideoId(url) {
+        if (!url) return null;
+        const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]+)/);
+        return match ? match[1] : null;
+    }
+
     window.init = function() {
         const container = document.getElementById('weekPlan');
-        if (!container) return;
-
-        let saved = {};
-        try {
-            saved = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
-        } catch (e) {
-            console.error("Datenfehler im LocalStorage", e);
-        }
-
+        const saved = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
         const theme = localStorage.getItem(STORAGE_THEME) || 'light';
         document.body.setAttribute('data-theme', theme);
         updateThemeButton(theme);
@@ -433,11 +452,7 @@
         tage.forEach(tag => {
             const data = saved[tag] || { title: "", img: "", cat: "", raw: null };
             if (data.raw) mealStore[tag] = data.raw;
-            
             const imgSrc = data.img || PLACEHOLDER_IMG;
-            const imgClass = data.img && data.img !== PLACEHOLDER_IMG ? 'meal-img' : 'meal-img placeholder';
-            const imgAlt = data.title || 'Noch nicht gewürfelt';
-
             container.innerHTML += `
                 <div class="day-card">
                     <div class="card-top">
@@ -447,224 +462,20 @@
                             <option value="MY" ${data.cat === 'MY' ? 'selected' : ''}>👤 Eigene</option>
                             <option value="Vegetarian" ${data.cat === 'Vegetarian' ? 'selected' : ''}>🥗 Veggie</option>
                             <option value="Pasta" ${data.cat === 'Pasta' ? 'selected' : ''}>🍝 Pasta</option>
-                            <option value="Seafood" ${data.cat === 'Seafood' ? 'selected' : ''}>🐟 Fisch</option>
                             <option value="Chicken" ${data.cat === 'Chicken' ? 'selected' : ''}>🍗 Huhn</option>
                             <option value="Beef" ${data.cat === 'Beef' ? 'selected' : ''}>🥩 Rind</option>
-                            <option value="Pork" ${data.cat === 'Pork' ? 'selected' : ''}>🍖 Schwein</option>
-                            <option value="Lamb" ${data.cat === 'Lamb' ? 'selected' : ''}>🐑 Lamm</option>
-                            <option value="Side" ${data.cat === 'Side' ? 'selected' : ''}>🍟 Beilagen</option>
-                            <option value="Starter" ${data.cat === 'Starter' ? 'selected' : ''}>🍲 Vorspeise</option>
-                            <option value="Dessert" ${data.cat === 'Dessert' ? 'selected' : ''}>🍰 Dessert</option>
                         </select>
                     </div>
                     <div class="card-body">
-                        <img id="img-${tag}" class="${imgClass}" src="${imgSrc}" alt="${imgAlt}" />
+                        <img id="img-${tag}" class="meal-img ${data.img ? '' : 'placeholder'}" src="${imgSrc}">
                         <div class="meal-info">
-                            <input type="text" id="input-${tag}" class="meal-input" value="${data.title}" readonly placeholder="Würfeln...">
+                            <input type="text" id="input-${tag}" class="meal-input" value="${data.title}" readonly>
                             <div id="btn-${tag}" class="recipe-btn" onclick="window.openRecipe('${tag}')" style="display:${data.title ? 'block' : 'none'}">📖 Rezept</div>
                         </div>
-                        <button class="btn-round btn-dice" onclick="window.fetchMeal('${tag}')">🎲</button>
+                        <button class="btn-round" onclick="window.fetchMeal('${tag}')">🎲</button>
                     </div>
                 </div>`;
         });
-    };
-
-    function splitLongText(text, maxLength = 450) {
-        const parts = [];
-        let remaining = text.trim();
-        while (remaining.length > 0) {
-            if (remaining.length <= maxLength) {
-                parts.push(remaining);
-                break;
-            }
-            let splitIndex = remaining.lastIndexOf('. ', maxLength);
-            if (splitIndex === -1) splitIndex = remaining.lastIndexOf(' ', maxLength);
-            if (splitIndex === -1) splitIndex = maxLength;
-            parts.push(remaining.slice(0, splitIndex + (remaining[splitIndex] === ' ' ? 0 : 0)).trim());
-            remaining = remaining.slice(splitIndex).trim();
-        }
-        return parts;
-    }
-
-    async function translateText(text, lang) {
-        if (!text) return '';
-        const cacheKey = `${text}_${lang}`;
-        if (translationCache[cacheKey]) return translationCache[cacheKey];
-
-        const parts = splitLongText(text, 450);
-        const translations = [];
-        for (const part of parts) {
-            try {
-                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(part)}&langpair=en|${lang}`;
-                const res = await fetch(url);
-                if (!res.ok) { translations.push(await translateWithGoogle(part, lang)); continue; }
-                const data = await res.json();
-                const translated = data.responseData?.translatedText;
-                translations.push(translated && translated !== part ? translated : await translateWithGoogle(part, lang));
-            } catch (e) { translations.push(await translateWithGoogle(part, lang)); }
-        }
-        const result = translations.join(' ');
-        translationCache[cacheKey] = result;
-        localStorage.setItem('translation_cache', JSON.stringify(translationCache));
-        return result;
-    }
-
-    async function translateWithGoogle(text, lang) {
-        try {
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`;
-            const res = await fetch(url);
-            if (!res.ok) return text;
-            const data = await res.json();
-            return data[0].map(s => s[0]).join('') || text;
-        } catch (e) { return text; }
-    }
-
-    function getYoutubeVideoId(url) {
-        if (!url) return null;
-        try {
-            const parsed = new URL(url);
-            if (parsed.hostname.includes('youtu.be')) return parsed.pathname.slice(1);
-            if (parsed.hostname.includes('youtube.com')) {
-                if (parsed.searchParams.has('v')) return parsed.searchParams.get('v');
-                const pathMatch = parsed.pathname.match(/embed\/([a-zA-Z0-9_-]+)/);
-                if (pathMatch) return pathMatch[1];
-            }
-        } catch (e) {
-            const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]+)/);
-            return match ? match[1] : null;
-        }
-        return null;
-    }
-
-    function updateThemeButton(theme) {
-        const btn = document.getElementById('themeBtn');
-        if (!btn) return;
-        btn.textContent = theme === 'light' ? '🌙' : '☀️';
-        btn.title = theme === 'light' ? 'Dunkles Theme' : 'Helles Theme';
-    }
-
-    async function translateText(text, lang) {
-        if (!text) return '';
-        const cacheKey = `${text}_${lang}`;
-        if (translationCache[cacheKey]) return translationCache[cacheKey];
-
-        const parts = splitLongText(text, 450);
-        const translations = [];
-        for (const part of parts) {
-            try {
-                const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(part)}&langpair=en|${lang}`;
-                const res = await fetch(url);
-                if (!res.ok) { translations.push(await translateWithGoogle(part, lang)); continue; } // Fallback to Google
-                const data = await res.json();
-                const translated = data.responseData?.translatedText;
-                translations.push(translated && translated !== part ? translated : await translateWithGoogle(part, lang)); // Fallback if MyMemory returns same text
-            } catch (e) { translations.push(await translateWithGoogle(part, lang)); } // Fallback on fetch error
-        }
-        const result = translations.join(' ');
-        translationCache[cacheKey] = result;
-        localStorage.setItem('translation_cache', JSON.stringify(translationCache));
-        return result;
-    }
-
-    async function translateWithGoogle(text, lang) {
-        try {
-            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(text)}`;
-            const res = await fetch(url);
-            if (!res.ok) return text;
-            const data = await res.json();
-            return data[0].map(s => s[0]).join('') || text;
-        } catch (e) { return text; }
-    }
-
-    function getYoutubeVideoId(url) {
-        if (!url) return null;
-        try {
-            const parsed = new URL(url);
-            if (parsed.hostname.includes('youtu.be')) return parsed.pathname.slice(1);
-            if (parsed.hostname.includes('youtube.com')) {
-                if (parsed.searchParams.has('v')) return parsed.searchParams.get('v');
-                const pathMatch = parsed.pathname.match(/embed\/([a-zA-Z0-9_-]+)/);
-                if (pathMatch) return pathMatch[1];
-            }
-        } catch (e) {
-            const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]+)/);
-            return match ? match[1] : null;
-        }
-        return null;
-    }
-
-    window.updateThemeButton = updateThemeButton; // Make updateThemeButton globally accessible
-
-    window.toggleTheme = function() { // Override the default toggleTheme to not reload the page
-        const current = document.body.getAttribute('data-theme') || 'light';
-        const next = current === 'light' ? 'dark' : 'light';
-        document.body.setAttribute('data-theme', next);
-        localStorage.setItem(STORAGE_THEME, next);
-        window.updateThemeButton(next); // Update button text directly
-    };
-
-    window.openCustomEditor = function() {
-        document.getElementById('customModal').style.display = 'flex';
-    };
-
-    window.saveCustomRecipe = async function() {
-        const name = document.getElementById('customName').value.trim();
-        const ingRaw = document.getElementById('customIng').value.split('\n').map(i => i.trim()).filter(Boolean);
-        const ins = document.getElementById('customIns').value.trim();
-        const imgInput = document.getElementById('customImgInput');
-
-        if (!name || ingRaw.length === 0) return alert('Bitte Name und Zutaten angeben!');
-
-        let imgBase64 = null;
-        if (imgInput.files && imgInput.files[0]) {
-            try {
-                imgBase64 = await compressImage(imgInput.files[0]);
-            } catch (e) { console.error("Bild-Kompression fehlgeschlagen", e); }
-        }
-
-        myRecipes.push({ strMeal: name, strInstructions: ins, isCustom: true, ingredients: ingRaw, img: imgBase64 });
-        localStorage.setItem(STORAGE_RECIPES, JSON.stringify(myRecipes));
-        document.getElementById('customName').value = '';
-        document.getElementById('customIng').value = '';
-        document.getElementById('customIns').value = '';
-        if(imgInput) imgInput.value = '';
-        window.closeModal('customModal');
-    };
-
-    window.openRecipe = async function(tag) {
-        const meal = mealStore[tag];
-        if (!meal) return;
-        const title = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('recipeModal').style.display = 'flex';
-        const tabBtnEN = document.getElementById('tabBtnEN');
-        const tabBtnVideo = document.getElementById('tabBtnVideo');
-        let ingsEN = [];
-        if (meal.isCustom) {
-            ingsEN = meal.ingredients; tabBtnEN.style.display = 'none'; tabBtnVideo.style.display = 'none';
-        } else {
-            tabBtnEN.style.display = 'block';
-            for (let i = 1; i <= 20; i++) {
-                const ingredient = meal[`strIngredient${i}`];
-                if (ingredient) ingsEN.push(`${meal[`strMeasure${i}`] || ''} ${ingredient}`.trim());
-            }
-        }
-        const displayedIngredients = ingsEN.map(line => window.scaleIngredient(line));
-        document.getElementById('ingEN').innerHTML = displayedIngredients.map(i => `<div>${i}</div>`).join('');
-        document.getElementById('insEN').innerText = meal.strInstructions || '';
-        const translatedIngredients = meal.isCustom
-            ? displayedIngredients : await Promise.all(displayedIngredients.map(i => translateText(i, 'de')));
-        document.getElementById('ingDE').innerHTML = translatedIngredients.map(i => `<div style="background:var(--bg);padding:8px;border-radius:10px;">${i}</div>`).join('');
-        document.getElementById('insDE').innerText = meal.isCustom ? meal.strInstructions : await translateText(meal.strInstructions, 'de');
-        const vId = !meal.isCustom && meal.strYoutube ? getYoutubeVideoId(meal.strYoutube) : null;
-        const videoBox = document.getElementById('videoBox'); const videoFallback = document.getElementById('videoFallback');
-        if (vId) {
-            tabBtnVideo.style.display = 'block';
-            const youtubeUrl = `https://www.youtube.com/watch?v=${vId}`; const embedUrl = `https://www.youtube-nocookie.com/embed/${vId}?rel=0&modestbranding=1&showinfo=0`;
-            videoBox.innerHTML = `<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="${embedUrl}" allowfullscreen></iframe>`;
-            videoFallback.innerHTML = `<a href="${youtubeUrl}" target="_blank" style="color:var(--accent);">▶️ Auf YouTube ansehen</a>`;
-        } else { tabBtnVideo.style.display = 'none'; videoBox.innerHTML = ''; videoFallback.innerHTML = ''; }
-        window.showTab('DE');
     };
 
     window.save = async function() {
@@ -680,227 +491,147 @@
                 raw: mealStore[t] || null
             };
         });
-
         try {
             localStorage.setItem(STORAGE_PLAN, JSON.stringify(data));
-            if (householdId && typeof isRemoteUpdate !== 'undefined' && !isRemoteUpdate) {
-                await setDoc(doc(db, "plans", householdId), data);
-            }
-        } catch (e) {
-            console.warn("Lokal Speichern fehlgeschlagen (Speicher voll?):", e);
-            if (e.name === 'QuotaExceededError') {
-                window.showMessage("Speicher voll! Bilder löschen.", "error");
-            }
-        }
+            if (householdId && !isRemoteUpdate) { await setDoc(doc(db, "plans", householdId), data); }
+        } catch (e) { console.warn("Save failed", e); }
     };
 
     window.fetchMeal = async function(tag) {
-        const catSelect = document.getElementById(`cat-${tag}`);
-        const category = catSelect ? catSelect.value : "";
-        let meal;
+        const cat = document.getElementById(`cat-${tag}`).value;
         try {
-            if (category === 'MY') {
-                if (myRecipes.length === 0) return alert('Keine eigenen Rezepte vorhanden.');
+            let meal;
+            if (cat === 'MY') {
+                if (myRecipes.length === 0) return alert("Keine eigenen Rezepte!");
                 meal = myRecipes[Math.floor(Math.random() * myRecipes.length)];
             } else {
-                const apiURL = category ? `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}` : 'https://www.themealdb.com/api/json/v1/1/random.php';
-                const res = await fetch(apiURL);
-                if (!res.ok) throw new Error('API-Anfrage fehlgeschlagen');
+                const res = await fetch(cat ? `<https://www.themealdb.com/api/json/v1/1/filter.php?c=${cat}>` : 'https://www.themealdb.com/api/json/v1/1/random.php');
                 const data = await res.json();
-                if (!data.meals?.length) return alert('Für diese Kategorie wurde kein Rezept gefunden.');
-                const tempMeal = data.meals[Math.floor(Math.random() * data.meals.length)];
-                const dRes = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${tempMeal.idMeal}`);
-                if (!dRes.ok) throw new Error('Detaildaten konnten nicht geladen werden');
+                const temp = data.meals[Math.floor(Math.random() * data.meals.length)];
+                const dRes = await fetch(`<https://www.themealdb.com/api/json/v1/1/lookup.php?i=${temp.idMeal}>`);
                 const dData = await dRes.json();
-                meal = dData.meals?.[0];
-                if (!meal) throw new Error('Das Rezept konnte nicht geladen werden.');
+                meal = dData.meals[0];
             }
-
-            const nameDE = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
-            const imgSrc = meal.isCustom ? (meal.img || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=200') : meal.strMealThumb;
-            document.getElementById(`input-${tag}`).value = nameDE;
+            const title = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
+            const imgSrc = meal.isCustom ? (meal.img || PLACEHOLDER_IMG) : meal.strMealThumb;
+            document.getElementById(`input-${tag}`).value = title;
             document.getElementById(`img-${tag}`).src = imgSrc;
-            document.getElementById(`img-${tag}`).style.display = 'block';
+            document.getElementById(`img-${tag}`).classList.remove('placeholder');
             document.getElementById(`btn-${tag}`).style.display = 'block';
             mealStore[tag] = meal;
-            await window.save();
-        } catch (error) {
-            console.error("Fehler beim Laden/Speichern:", error);
-            // Wir zeigen keinen Alert mehr, wenn das Rezept sichtbar ist aber das Speichern (Quota) fehlschlug
-        }
+            window.save();
+        } catch (e) { console.error(e); }
     };
 
     window.openRecipe = async function(tag) {
         const meal = mealStore[tag];
         if (!meal) return;
-        const title = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
-        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalTitle').innerText = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
         document.getElementById('recipeModal').style.display = 'flex';
-        const tabBtnEN = document.getElementById('tabBtnEN');
-        const tabBtnVideo = document.getElementById('tabBtnVideo');
-        let ingsEN = [];
-        if (meal.isCustom) {
-            ingsEN = meal.ingredients; tabBtnEN.style.display = 'none'; tabBtnVideo.style.display = 'none';
-        } else {
-            tabBtnEN.style.display = 'block';
-            for (let i = 1; i <= 20; i++) {
-                const ingredient = meal[`strIngredient${i}`];
-                if (ingredient) ingsEN.push(`${meal[`strMeasure${i}`] || ''} ${ingredient}`.trim());
-            }
-        }
-        const displayedIngredients = ingsEN.map(line => window.scaleIngredient(line));
-        document.getElementById('ingEN').innerHTML = displayedIngredients.map(i => `<div>${i}</div>`).join('');
-        document.getElementById('insEN').innerText = meal.strInstructions || '';
-        const translatedIngredients = meal.isCustom
-            ? displayedIngredients : await Promise.all(displayedIngredients.map(i => translateText(i, 'de')));
-        document.getElementById('ingDE').innerHTML = translatedIngredients.map(i => `<div style="background:var(--bg);padding:8px;border-radius:10px;">${i}</div>`).join('');
+        let ings = [];
+        if (meal.isCustom) { ings = meal.ingredients; } 
+        else { for (let i = 1; i <= 20; i++) { if (meal[`strIngredient${i}`]) ings.push(`${meal[`strMeasure${i}`] || ''} ${meal[`strIngredient${i}`]}`); } }
+        const scaledIngs = ings.map(i => window.scaleIngredient(i));
+        document.getElementById('ingEN').innerHTML = scaledIngs.map(i => `<div>${i}</div>`).join('');
+        document.getElementById('insEN').innerText = meal.strInstructions;
+        const transIngs = await Promise.all(scaledIngs.map(i => translateText(i, 'de')));
+        document.getElementById('ingDE').innerHTML = transIngs.map(i => `<div style="background:var(--bg);padding:8px;border-radius:8px;">${i}</div>`).join('');
         document.getElementById('insDE').innerText = meal.isCustom ? meal.strInstructions : await translateText(meal.strInstructions, 'de');
-        const vId = !meal.isCustom && meal.strYoutube ? getYoutubeVideoId(meal.strYoutube) : null;
-        const videoBox = document.getElementById('videoBox'); const videoFallback = document.getElementById('videoFallback');
+        
+        const vId = getYoutubeVideoId(meal.strYoutube);
+        const videoBox = document.getElementById('videoBox');
         if (vId) {
-            tabBtnVideo.style.display = 'block';
-            const youtubeUrl = `https://www.youtube.com/watch?v=${vId}`; const embedUrl = `https://www.youtube-nocookie.com/embed/${vId}?rel=0&modestbranding=1&showinfo=0`;
-            videoBox.innerHTML = `<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="${embedUrl}" allowfullscreen></iframe>`;
-            videoFallback.innerHTML = `<a href="${youtubeUrl}" target="_blank" style="color:var(--accent);">▶️ Auf YouTube ansehen</a>`;
-        } else { tabBtnVideo.style.display = 'none'; videoBox.innerHTML = ''; videoFallback.innerHTML = ''; }
-        window.showTab('DE');
+            document.getElementById('tabBtnVideo').style.display = 'flex';
+            videoBox.innerHTML = `<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="https://www.youtube-nocookie.com/embed/${vId}" allowfullscreen></iframe>`;
+            window.showTab('Video');
+        } else {
+            document.getElementById('tabBtnVideo').style.display = 'none';
+            window.showTab('DE');
+        }
     };
 
     window.generateShoppingList = async function() {
-        const content = document.getElementById('listContent');
-        content.innerHTML = '⏳ Liste wird erstellt...';
         document.getElementById('shoppingModal').style.display = 'flex';
-        
-        const dayResults = await Promise.all(tage.map(async (t) => {
+        const content = document.getElementById('listContent');
+        content.innerHTML = 'Lädt...';
+        const results = await Promise.all(tage.map(async t => {
             const m = mealStore[t];
-            const titleInput = document.getElementById(`input-${t}`);
-            const title = titleInput ? titleInput.value.trim() : "";
+            const title = document.getElementById(`input-${t}`).value;
             if (!title) return '';
-
             let html = `<div class="shop-day-header">${t}: ${title}</div><ul class="shopping-list">`;
-            const ingredients = [];
             if (m) {
-                if (m.isCustom) {
-                    ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
-                } else {
-                    for (let i = 1; i <= 20; i++) {
-                        const ingredient = m[`strIngredient${i}`]?.trim();
-                        const measure = m[`strMeasure${i}`]?.trim() || '';
-                        if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
-                    }
-                }
-            }
-            
-            const [mealTitle, ...translatedItems] = await Promise.all([
-                (m && !m.isCustom) ? translateText(title, 'de') : Promise.resolve(title), 
-                ...ingredients.map(i => (m && !m.isCustom) ? translateText(i, 'de') : Promise.resolve(i))
-            ]);
-
-            html += translatedItems.filter(Boolean).map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
-            if (translatedItems.filter(Boolean).length === 0 && ingredients.length > 0) {
-                 html += `<li style="list-style:none; color:var(--text-muted); font-size:0.85rem;">(Zutaten konnten nicht übersetzt werden)</li>`;
-            } else if (ingredients.length === 0) {
-                html += `<li style="list-style:none; color:var(--text-muted); font-size:0.85rem;">Keine Zutaten verfügbar</li>`;
-            }
-            html += `</ul>`;
-            return html;
+                let ings = m.isCustom ? m.ingredients : [];
+                if (!m.isCustom) { for (let i = 1; i <= 20; i++) if (m[`strIngredient${i}`]) ings.push(`${m[`strMeasure${i}`] || ''} ${m[`strIngredient${i}`]}`); }
+                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i), 'de')));
+                html += trans.map(i => `<li onclick="this.classList.toggle('checked')"><input type="checkbox"><span>${i}</span></li>`).join('');
+            } else { html += `<li>Keine Zutaten</li>`; }
+            return html + `</ul>`;
         }));
-        content.innerHTML = dayResults.join('') || 'Kein Plan vorhanden.';
+        content.innerHTML = results.join('') || 'Kein Plan.';
     };
-            
+
     window.shareWhatsApp = async function() {
-        let text = "*Einkaufsliste* 🛒\n\n";
-        let hasContent = false;
-        
-        const dayResults = await Promise.all(tage.map(async (t) => {
-            const m = mealStore[t];
-            const titleInput = document.getElementById(`input-${t}`);
-            const title = titleInput ? titleInput.value.trim() : "";
-            if (!title) return '';
-
-            let dayText = `*${t}: ${title}*\n`;
-            const ingredients = [];
-            if (m) {
-                if (m.isCustom) {
-                    ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
-                } else {
-                    for (let i = 1; i <= 20; i++) {
-                        const ingredient = m[`strIngredient${i}`]?.trim();
-                        const measure = m[`strMeasure${i}`]?.trim() || '';
-                        if (ingredient) ingredients.push(window.scaleIngredient(`${measure} ${ingredient}`.trim()));
-                    }
-                }
+        let text = "*Einkaufsliste*\n\n";
+        for (let t of tage) {
+            const title = document.getElementById(`input-${t}`).value;
+            if (!title) continue;
+            text += `*${t}: ${title}*\n`;
+            if (mealStore[t]) {
+                let ings = mealStore[t].isCustom ? mealStore[t].ingredients : [];
+                if (!mealStore[t].isCustom) { for (let i = 1; i <= 20; i++) if (mealStore[t][`strIngredient${i}`]) ings.push(`${mealStore[t][`strMeasure${i}`] || ''} ${mealStore[t][`strIngredient${i}`]}`); }
+                const trans = await Promise.all(ings.map(i => translateText(window.scaleIngredient(i), 'de')));
+                trans.forEach(i => text += `- ${i}\n`);
             }
-
-            const translatedItems = await Promise.all(ingredients.map(i => (m && !m.isCustom) ? translateText(i, 'de') : Promise.resolve(i)));
-            translatedItems.filter(Boolean).forEach(i => dayText += `- ${i}\n`);
-            dayText += "\n";
-            return dayText;
-        }));
-
-        text += dayResults.filter(Boolean).join('');
-        if (text === "*Einkaufsliste* 🛒\n\n") return alert("Kein Plan vorhanden zum Teilen.");
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            text += "\n";
+        }
+        window.open(`<https://wa.me/?text=${encodeURIComponent(text)}>`);
     };
 
-    window.showTab = function(lang) {
+    window.saveCustomRecipe = async function() {
+        const name = document.getElementById('customName').value;
+        const ings = document.getElementById('customIng').value.split('\n').filter(i => i.trim());
+        const ins = document.getElementById('customIns').value;
+        const file = document.getElementById('customImgInput').files[0];
+        let img = "";
+        if (file) img = await compressImage(file);
+        myRecipes.push({ strMeal: name, ingredients: ings, strInstructions: ins, isCustom: true, img: img });
+        localStorage.setItem(STORAGE_RECIPES, JSON.stringify(myRecipes));
+        window.closeModal('customModal');
+        window.init();
+    };
+
+    window.joinHousehold = function() {
+        const id = document.getElementById('householdIdInput').value.trim().toLowerCase();
+        if (id) { localStorage.setItem(STORAGE_HOUSEHOLD, id); location.reload(); }
+    };
+
+    window.leaveHousehold = function() { localStorage.removeItem(STORAGE_HOUSEHOLD); location.reload(); };
+    window.closeModal = id => document.getElementById(id).style.display = 'none';
+    window.closeRecipe = () => window.closeModal('recipeModal');
+    window.showTab = lang => {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        const content = document.getElementById('content' + lang); if (content) content.classList.add('active');
-        const btn = document.getElementById('tabBtn' + lang); if (btn) btn.classList.add('active');
+        document.getElementById('content' + lang).classList.add('active');
+        document.getElementById('tabBtn' + lang).classList.add('active');
     };
-
-    window.closeModal = function(id) {
-        const modal = document.getElementById(id); if (modal) modal.style.display = 'none';
-    };
-
-    window.closeRecipe = function() {
-        window.closeModal('recipeModal'); const vb = document.getElementById('videoBox'); if (vb) vb.innerHTML = '';
-    };
-
-    window.toggleFavorite = function() { window.showMessage("Favoriten kommen bald!", "info"); };
-
-    window.resetPlan = async function() {
-        if (confirm('Plan zurücksetzen?')) {
-            localStorage.removeItem(STORAGE_PLAN); mealStore = {}; window.init(); window.showMessage('Plan wurde zurückgesetzt.', 'info');
-        }
-    };
-
-    window.openSyncModal = function() {
-        const input = document.getElementById('householdIdInput'); if (input) input.value = householdId || '';
-        const info = document.getElementById('householdInfo'); if (info) info.textContent = householdId ? `Aktueller Haushalt: ${householdId}` : 'Noch kein Haushalt verknüpft.';
-        const modal = document.getElementById('syncModal'); if (modal) modal.style.display = 'flex';
-    };
-
-    window.joinHousehold = async function() {
-        const input = document.getElementById('householdIdInput');
-        const id = input ? input.value.trim().toLowerCase().replace(/[^a-z0-1-]/g, '') : "";
-        if (id.length < 3) return alert("ID zu kurz!");
-        localStorage.setItem(STORAGE_HOUSEHOLD, id); window.showMessage("Haushalt beigetreten. Lade Daten...", "success"); location.reload();
-    };
-
-    window.leaveHousehold = function() {
-        localStorage.removeItem(STORAGE_HOUSEHOLD);
-        location.reload();
+    window.resetPlan = () => { if(confirm("Löschen?")) { localStorage.removeItem(STORAGE_PLAN); location.reload(); }};
+    window.showMessage = (t, type) => {
+        const s = document.getElementById('statusMessage');
+        s.innerText = t; s.className = 'status-message message-' + type;
+        setTimeout(() => s.innerText = '', 4000);
     };
 
     if (householdId) {
-        const status = document.getElementById('syncStatus'); if (status) status.style.display = 'block';
-        const planRef = doc(db, "plans", householdId);
-        onSnapshot(planRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const remoteData = docSnap.data();
-                const localData = JSON.parse(localStorage.getItem(STORAGE_PLAN) || '{}');
-                if (JSON.stringify(remoteData) !== JSON.stringify(localData)) {
-                    isRemoteUpdate = true; localStorage.setItem(STORAGE_PLAN, JSON.stringify(remoteData)); window.init(true); isRemoteUpdate = false;
-                }
+        document.getElementById('syncStatus').style.display = 'block';
+        onSnapshot(doc(db, "plans", householdId), (snap) => {
+            if (snap.exists() && !isRemoteUpdate) {
+                isRemoteUpdate = true;
+                localStorage.setItem(STORAGE_PLAN, JSON.stringify(snap.data()));
+                window.init();
+                isRemoteUpdate = false;
             }
         });
     }
-
-    window.addEventListener('click', event => {
-        const modal = event.target.closest('.modal'); if (modal && event.target === modal) window.closeModal(modal.id);
-    });
 
     window.init();
 </script>
