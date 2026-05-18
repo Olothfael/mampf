@@ -903,7 +903,7 @@
 
             const nameDE = meal.isCustom ? meal.strMeal : await translateText(meal.strMeal, 'de');
             const imgSrc = meal.isCustom ? 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=200' : meal.strMealThumb;
-{tag}`).value = nameDE;
+            document.getElementById(`input-${tag}`).value = nameDE;
             document.getElementById(`img-${tag}`).src = imgSrc;
             document.getElementById(`img-${tag}`).style.display = 'block';
             document.getElementById(`btn-${tag}`).style.display = 'block';
@@ -981,7 +981,7 @@
             if (!m || !m.strMeal) continue;
             const ingredients = [];
             if (m.isCustom) {
-                ingredients.push(...m.ingredients.map(line => window.scaleIngredient(line)));
+                ingredients.push(...m.ingredients.map(line => scaleIngredient(line)));
             } else {
                 for (let i = 1; i <= 20; i++) {
                     const ingredient = m[`strIngredient${i}`]?.trim();
@@ -1032,7 +1032,7 @@
         localStorage.setItem(STORAGE_PLAN, JSON.stringify(data));
 
         // In Cloud speichern, wenn Haushalt aktiv
-        if (householdId && !isRemoteUpdate) {
+        if (householdId && typeof isRemoteUpdate !== 'undefined' && !isRemoteUpdate) {
             try {
                 await setDoc(doc(db, "plans", householdId), data);
             } catch (e) { console.error("Cloud Save Error", e); }
@@ -1081,7 +1081,7 @@
         }
         
         localStorage.setItem(STORAGE_HOUSEHOLD, id);
-        showMessage("Haushalt beigetreten. Lade Daten...", "success");
+        window.showMessage("Haushalt beigetreten. Lade Daten...", "success");
         location.reload();
     }
 
